@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Users, Briefcase } from "lucide-react";
-import heroImage from "@/assets/hero-alumni.jpg";
+import heroImage from "@/assets/coou-campus-gate.jpg";
 
 export const Hero = () => {
   return (
@@ -14,18 +14,19 @@ export const Hero = () => {
           <div className="lg:col-span-7 animate-fade-up">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-xs font-medium text-primary mb-6">
               <Sparkles className="w-3.5 h-3.5 text-gold" />
-              <span>AI-powered alumni intelligence</span>
+              <span>Official COOU Alumni Platform</span>
             </div>
 
             <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-semibold leading-[1.05] text-balance text-primary">
-              Where graduates become a{" "}
-              <span className="italic font-light text-primary-glow">lifelong</span>{" "}
-              network.
+              Once a COOU graduate,{" "}
+              <span className="italic font-light text-primary-glow">always</span>{" "}
+              connected.
             </h1>
 
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
-              AluminAI unites alumni, students, and institutions into one intelligent platform —
-              for mentorship, careers, events, and giving back.
+              The official alumni network of Chukwuemeka Odumegwu Ojukwu University —
+              uniting graduates, students and faculty across Igbariam, Uli and Awka campuses
+              for mentorship, careers and lifelong impact.
             </p>
 
             <div className="mt-10 flex flex-wrap gap-3">
@@ -55,12 +56,12 @@ export const Hero = () => {
             <div className="relative rounded-2xl overflow-hidden shadow-elegant">
               <img
                 src={heroImage}
-                alt="Alumni network of diverse graduates connecting through AluminAI"
+                alt="The main entrance gate of Chukwuemeka Odumegwu Ojukwu University (COOU)"
                 width={1280}
-                height={1280}
+                height={1600}
                 className="w-full h-auto object-cover aspect-[4/5]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/50 via-primary/10 to-transparent" />
             </div>
 
             {/* Floating cards */}
@@ -70,7 +71,7 @@ export const Hero = () => {
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">New connection</div>
-                <div className="text-sm font-semibold">Sarah · Class of '18</div>
+                <div className="text-sm font-semibold">Chinaza · Class of '18</div>
               </div>
             </div>
             <div className="hidden md:flex absolute -right-4 bottom-16 bg-card rounded-xl shadow-card border border-border/60 p-4 gap-3 items-center animate-float" style={{ animationDelay: "1.5s" }}>
@@ -79,7 +80,7 @@ export const Hero = () => {
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">Referral match</div>
-                <div className="text-sm font-semibold">PM @ Stripe</div>
+                <div className="text-sm font-semibold">Analyst @ Access Bank</div>
               </div>
             </div>
           </div>
