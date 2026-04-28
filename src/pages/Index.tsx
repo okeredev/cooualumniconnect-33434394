@@ -11,14 +11,14 @@ import { useEffect } from "react";
 
 const Index = () => {
   useEffect(() => {
-    document.title = "AluminAI — Smart Alumni Networking & Career Platform";
+    document.title = "COOU Alumni Connect — Chukwuemeka Odumegwu Ojukwu University";
     const meta = document.querySelector('meta[name="description"]') || (() => {
       const m = document.createElement("meta");
       m.setAttribute("name", "description");
       document.head.appendChild(m);
       return m;
     })();
-    meta.setAttribute("content", "AluminAI connects alumni, students, and institutions with AI-powered networking, mentorship, careers, events, and giving.");
+    meta.setAttribute("content", "COOU Alumni Connect — the official alumni networking, mentorship and career platform of Chukwuemeka Odumegwu Ojukwu University.");
   }, []);
 
   return (

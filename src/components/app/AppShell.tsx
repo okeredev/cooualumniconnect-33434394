@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
-import { GraduationCap, LayoutDashboard, Users, Briefcase, Bell, Search } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Bell, Search } from "lucide-react";
+import coouLogo from "@/assets/coou-logo.png";
 
 const links = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -12,12 +13,10 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
     <div className="min-h-screen bg-gradient-cream">
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/60">
         <div className="container flex items-center justify-between h-16">
-          <NavLink to="/" className="flex items-center gap-2">
-            <span className="grid place-items-center w-9 h-9 rounded-lg bg-gradient-hero">
-              <GraduationCap className="w-5 h-5 text-gold" />
-            </span>
-            <span className="font-display font-semibold text-lg">
-              Alumin<span className="text-primary">AI</span>
+          <NavLink to="/" className="flex items-center gap-2.5">
+            <img src={coouLogo} alt="COOU" className="w-10 h-10 object-contain" />
+            <span className="font-display font-semibold text-base leading-tight hidden sm:inline">
+              COOU <span className="text-primary">Alumni Connect</span>
             </span>
           </NavLink>
 
