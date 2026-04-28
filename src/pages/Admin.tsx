@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BadgeCheck, Ban, Shield, ShieldOff, Trash2, Plus, Pencil, Users, Briefcase, Calendar, Flag, BarChart3, Loader2 } from "lucide-react";
+import { BadgeCheck, Ban, Shield, ShieldOff, Trash2, Plus, Pencil, Users, Briefcase, Calendar, Flag, BarChart3, Loader2, Download, Check, X as XIcon, Clock } from "lucide-react";
+import { downloadCsv } from "@/lib/csv";
 
 type Role = "admin" | "moderator" | "user";
 
@@ -17,7 +18,7 @@ type ProfileRow = {
   verified: boolean; suspended: boolean; created_at: string; department: string | null; graduation_year: number | null;
 };
 
-type Job = { id: string; title: string; company: string; location: string | null; type: string | null; description: string | null; apply_url: string | null; created_at: string };
+type Job = { id: string; title: string; company: string; location: string | null; type: string | null; description: string | null; apply_url: string | null; created_at: string; status: string; posted_by: string | null };
 type Event = { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string | null; image_url: string | null };
 type Report = { id: string; reporter_id: string; reported_user_id: string; reason: string; resolved: boolean; created_at: string };
 
@@ -34,9 +35,10 @@ const AdminPage = () => {
         </div>
 
         <Tabs defaultValue="analytics">
-          <TabsList className="grid w-full max-w-2xl grid-cols-5">
+          <TabsList className="flex w-full overflow-x-auto md:grid md:max-w-3xl md:grid-cols-6">
             <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1.5" />Analytics</TabsTrigger>
             <TabsTrigger value="users"><Users className="w-4 h-4 mr-1.5" />Users</TabsTrigger>
+            <TabsTrigger value="moderation"><Clock className="w-4 h-4 mr-1.5" />Moderation</TabsTrigger>
             <TabsTrigger value="jobs"><Briefcase className="w-4 h-4 mr-1.5" />Jobs</TabsTrigger>
             <TabsTrigger value="events"><Calendar className="w-4 h-4 mr-1.5" />Events</TabsTrigger>
             <TabsTrigger value="reports"><Flag className="w-4 h-4 mr-1.5" />Reports</TabsTrigger>
@@ -44,6 +46,7 @@ const AdminPage = () => {
 
           <TabsContent value="analytics" className="mt-6"><AnalyticsTab /></TabsContent>
           <TabsContent value="users" className="mt-6"><UsersTab /></TabsContent>
+          <TabsContent value="moderation" className="mt-6"><ModerationTab /></TabsContent>
           <TabsContent value="jobs" className="mt-6"><JobsTab /></TabsContent>
           <TabsContent value="events" className="mt-6"><EventsTab /></TabsContent>
           <TabsContent value="reports" className="mt-6"><ReportsTab /></TabsContent>
@@ -55,21 +58,44 @@ const AdminPage = () => {
 
 // -------- Analytics --------
 const AnalyticsTab = () => {
-  const [stats, setStats] = useState({ users: 0, verified: 0, suspended: 0, jobs: 0, events: 0, reports: 0 });
+  const [stats, setStats] = useState({ users: 0, verified: 0, suspended: 0, jobs: 0, pendingJobs: 0, events: 0, reports: 0, applications: 0 });
+  const [signupsByDay, setSignupsByDay] = useState<{ day: string; n: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { (async () => {
-    const [u, v, s, j, e, r] = await Promise.all([
+  const refresh = async () => {
+    setLoading(true);
+    const [u, v, s, j, pj, e, r, a, recent] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase.from("profiles").select("id", { count: "exact", head: true }).eq("verified", true),
       supabase.from("profiles").select("id", { count: "exact", head: true }).eq("suspended", true),
-      supabase.from("jobs").select("id", { count: "exact", head: true }),
+      supabase.from("jobs").select("id", { count: "exact", head: true }).eq("status", "approved"),
+      supabase.from("jobs").select("id", { count: "exact", head: true }).eq("status", "pending"),
       supabase.from("events").select("id", { count: "exact", head: true }),
       supabase.from("directory_reports").select("id", { count: "exact", head: true }).eq("resolved", false),
+      supabase.from("applications").select("id", { count: "exact", head: true }),
+      supabase.from("profiles").select("created_at").gte("created_at", new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()),
     ]);
-    setStats({ users: u.count ?? 0, verified: v.count ?? 0, suspended: s.count ?? 0, jobs: j.count ?? 0, events: e.count ?? 0, reports: r.count ?? 0 });
+    setStats({ users: u.count ?? 0, verified: v.count ?? 0, suspended: s.count ?? 0, jobs: j.count ?? 0, pendingJobs: pj.count ?? 0, events: e.count ?? 0, reports: r.count ?? 0, applications: a.count ?? 0 });
+    const buckets: Record<string, number> = {};
+    (recent.data ?? []).forEach((row: any) => {
+      const d = new Date(row.created_at).toISOString().slice(0, 10);
+      buckets[d] = (buckets[d] ?? 0) + 1;
+    });
+    const days: { day: string; n: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      days.push({ day: d, n: buckets[d] ?? 0 });
+    }
+    setSignupsByDay(days);
     setLoading(false);
-  })(); }, []);
+  };
+  useEffect(() => { refresh(); }, []);
+
+  const exportAll = async () => {
+    const { data } = await supabase.from("profiles").select("display_name, email, department, graduation_year, city, state, phone, whatsapp, verified, suspended, created_at");
+    downloadCsv(`coou-users-${new Date().toISOString().slice(0, 10)}`, (data ?? []) as any);
+    toast.success("Users exported");
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
 
@@ -77,18 +103,105 @@ const AnalyticsTab = () => {
     { l: "Total users", v: stats.users, c: "from-primary to-primary-glow" },
     { l: "Verified", v: stats.verified, c: "from-green-600 to-emerald-500" },
     { l: "Suspended", v: stats.suspended, c: "from-red-600 to-orange-500" },
-    { l: "Jobs", v: stats.jobs, c: "from-amber-600 to-yellow-500" },
+    { l: "Approved jobs", v: stats.jobs, c: "from-amber-600 to-yellow-500" },
+    { l: "Pending jobs", v: stats.pendingJobs, c: "from-orange-600 to-amber-500" },
     { l: "Events", v: stats.events, c: "from-purple-600 to-fuchsia-500" },
+    { l: "Applications", v: stats.applications, c: "from-blue-600 to-cyan-500" },
     { l: "Open reports", v: stats.reports, c: "from-rose-600 to-pink-500" },
   ];
+  const max = Math.max(1, ...signupsByDay.map((d) => d.n));
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {cards.map((c) => (
-        <div key={c.l} className={`rounded-2xl p-6 bg-gradient-to-br ${c.c} text-white shadow-card`}>
-          <div className="text-xs uppercase tracking-wider opacity-80">{c.l}</div>
-          <div className="font-display text-4xl font-semibold mt-2">{c.v}</div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-2 justify-end">
+        <Button size="sm" variant="outline" onClick={refresh} aria-label="Refresh analytics">Refresh</Button>
+        <Button size="sm" variant="hero" onClick={exportAll} aria-label="Export users CSV"><Download className="w-4 h-4" /> Export users</Button>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map((c) => (
+          <div key={c.l} className={`rounded-2xl p-5 bg-gradient-to-br ${c.c} text-white shadow-card`}>
+            <div className="text-xs uppercase tracking-wider opacity-80">{c.l}</div>
+            <div className="font-display text-3xl font-semibold mt-2">{c.v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl bg-card border border-border/60 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Signups · last 30 days</div>
+            <div className="font-display text-xl font-semibold text-primary">{signupsByDay.reduce((a, b) => a + b.n, 0)} new alumni</div>
+          </div>
         </div>
-      ))}
+        <div className="flex items-end gap-1 h-32">
+          {signupsByDay.map((d) => (
+            <div key={d.day} title={`${d.day}: ${d.n}`} className="flex-1 bg-gradient-to-t from-primary to-primary-glow rounded-t" style={{ height: `${(d.n / max) * 100}%`, minHeight: 2 }} />
+          ))}
+        </div>
+        <div className="flex justify-between text-[10px] text-muted-foreground mt-2">
+          <span>{signupsByDay[0]?.day}</span>
+          <span>{signupsByDay[signupsByDay.length - 1]?.day}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// -------- Moderation (pending jobs) --------
+const ModerationTab = () => {
+  const [pending, setPending] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [posters, setPosters] = useState<Record<string, { name: string | null; email: string | null }>>({});
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("jobs").select("*").eq("status", "pending").order("created_at", { ascending: false });
+    const list = (data ?? []) as Job[];
+    setPending(list);
+    const ids = Array.from(new Set(list.map((j) => j.posted_by).filter(Boolean) as string[]));
+    if (ids.length) {
+      const { data: ps } = await supabase.from("profiles").select("user_id, display_name, email").in("user_id", ids);
+      const m: Record<string, { name: string | null; email: string | null }> = {};
+      (ps ?? []).forEach((p: any) => { m[p.user_id] = { name: p.display_name, email: p.email }; });
+      setPosters(m);
+    }
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const decide = async (id: string, status: "approved" | "rejected") => {
+    const { error } = await supabase.from("jobs").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success(status === "approved" ? "Approved & published" : "Rejected"); load(); }
+  };
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
+
+  if (pending.length === 0) return <p className="text-center text-muted-foreground py-12">No submissions awaiting review. ✨</p>;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">{pending.length} job submission{pending.length > 1 ? "s" : ""} awaiting review.</p>
+      {pending.map((j) => {
+        const p = j.posted_by ? posters[j.posted_by] : null;
+        return (
+          <div key={j.id} className="rounded-2xl bg-card border border-border/60 p-5">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-display font-semibold text-primary">{j.title}</div>
+                <div className="text-sm text-muted-foreground">{j.company} · {j.location || "—"} · {j.type || "—"}</div>
+                <p className="text-sm text-muted-foreground mt-2 whitespace-pre-line">{j.description}</p>
+                <div className="text-xs text-muted-foreground mt-3">
+                  Submitted by <span className="font-medium">{p?.name || p?.email || "Unknown"}</span> · {new Date(j.created_at).toLocaleString()}
+                  {j.apply_url && <> · <a href={j.apply_url} target="_blank" rel="noreferrer" className="text-primary underline">Apply link</a></>}
+                </div>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button size="sm" variant="hero" onClick={() => decide(j.id, "approved")} aria-label="Approve job"><Check className="w-4 h-4" /> Approve</Button>
+                <Button size="sm" variant="outline" onClick={() => decide(j.id, "rejected")} aria-label="Reject job"><XIcon className="w-4 h-4" /> Reject</Button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -137,8 +250,11 @@ const UsersTab = () => {
 
   return (
     <div className="space-y-4">
-      <Input placeholder="Search users..." value={q} onChange={(e) => setQ(e.target.value)} className="max-w-md" />
-      <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+      <div className="flex flex-wrap gap-2 items-center justify-between">
+        <Input placeholder="Search users..." value={q} onChange={(e) => setQ(e.target.value)} className="max-w-md" aria-label="Search users" />
+        <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-users-filtered-${Date.now()}`, filtered as any)} aria-label="Export filtered users CSV"><Download className="w-4 h-4" /> Export ({filtered.length})</Button>
+      </div>
+      <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
             <tr><th className="text-left p-3">User</th><th className="text-left p-3">Roles</th><th className="text-left p-3">Status</th><th className="text-right p-3">Actions</th></tr>
@@ -207,7 +323,8 @@ const JobsTab = () => {
 
   const save = async () => {
     if (!editing?.title || !editing?.company) { toast.error("Title and company required"); return; }
-    const payload = { title: editing.title, company: editing.company, location: editing.location, type: editing.type, description: editing.description, apply_url: editing.apply_url };
+    const payload: any = { title: editing.title, company: editing.company, location: editing.location, type: editing.type, description: editing.description, apply_url: editing.apply_url };
+    if (!editing.id) payload.status = "approved"; // admin posts go live immediately
     const { error } = editing.id
       ? await supabase.from("jobs").update(payload).eq("id", editing.id)
       : await supabase.from("jobs").insert({ ...payload, posted_by: (await supabase.auth.getUser()).data.user?.id });
@@ -219,23 +336,35 @@ const JobsTab = () => {
     await supabase.from("jobs").delete().eq("id", id);
     toast.success("Deleted"); load();
   };
+  const setStatus = async (id: string, status: string) => {
+    await supabase.from("jobs").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    toast.success(`Marked ${status}`); load();
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
 
   return (
     <div className="space-y-4">
-      <Button onClick={() => setEditing({})}><Plus className="w-4 h-4" /> New job</Button>
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <Button onClick={() => setEditing({})} aria-label="Create new job"><Plus className="w-4 h-4" /> New job</Button>
+        <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-jobs-${Date.now()}`, jobs as any)} aria-label="Export jobs CSV"><Download className="w-4 h-4" /> Export ({jobs.length})</Button>
+      </div>
       <div className="grid gap-3">
         {jobs.map((j) => (
-          <div key={j.id} className="rounded-2xl bg-card border border-border/60 p-5 flex items-start justify-between gap-4">
-            <div>
-              <div className="font-display font-semibold text-primary">{j.title}</div>
-              <div className="text-sm text-muted-foreground">{j.company} · {j.location} · {j.type}</div>
+          <div key={j.id} className="rounded-2xl bg-card border border-border/60 p-5 flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-display font-semibold text-primary">{j.title}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${j.status === "approved" ? "bg-green-100 text-green-800" : j.status === "rejected" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{j.status}</span>
+              </div>
+              <div className="text-sm text-muted-foreground">{j.company} · {j.location || "—"} · {j.type || "—"}</div>
               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{j.description}</p>
             </div>
-            <div className="flex gap-1">
-              <Button size="sm" variant="ghost" onClick={() => setEditing(j)}><Pencil className="w-4 h-4" /></Button>
-              <Button size="sm" variant="ghost" onClick={() => remove(j.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+            <div className="flex gap-1 flex-wrap">
+              {j.status !== "approved" && <Button size="sm" variant="outline" onClick={() => setStatus(j.id, "approved")} aria-label="Approve"><Check className="w-4 h-4" /></Button>}
+              {j.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => setStatus(j.id, "rejected")} aria-label="Reject"><XIcon className="w-4 h-4" /></Button>}
+              <Button size="sm" variant="ghost" onClick={() => setEditing(j)} aria-label="Edit"><Pencil className="w-4 h-4" /></Button>
+              <Button size="sm" variant="ghost" onClick={() => remove(j.id)} aria-label="Delete"><Trash2 className="w-4 h-4 text-destructive" /></Button>
             </div>
           </div>
         ))}

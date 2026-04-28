@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Search, MapPin, Briefcase, Building2, Clock, X, Loader2, ExternalLink } from "lucide-react";
+import { Search, MapPin, Briefcase, Building2, Clock, X, Loader2, ExternalLink, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,7 @@ type Job = {
   description: string | null;
   apply_url: string | null;
   created_at: string;
+  status?: string;
 };
 
 const JobsPage = () => {
@@ -31,6 +32,8 @@ const JobsPage = () => {
   const [type, setType] = useState("all");
   const [activeJob, setActiveJob] = useState<Job | null>(null);
   const [applyJob, setApplyJob] = useState<Job | null>(null);
+  const [postOpen, setPostOpen] = useState(false);
+  const [myPending, setMyPending] = useState<Job[]>([]);
 
   useEffect(() => {
     document.title = "Job Board — COOU Alumni Connect";
@@ -39,11 +42,15 @@ const JobsPage = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data: js } = await supabase.from("jobs").select("*").order("created_at", { ascending: false });
+    const { data: js } = await supabase.from("jobs").select("*").eq("status", "approved").order("created_at", { ascending: false });
     setJobs((js ?? []) as Job[]);
     if (user) {
       const { data: apps } = await supabase.from("applications").select("job_id").eq("user_id", user.id);
       setAppliedIds(new Set((apps ?? []).map((a: any) => a.job_id)));
+      const { data: mine } = await supabase.from("jobs").select("*").eq("posted_by", user.id).neq("status", "approved").order("created_at", { ascending: false });
+      setMyPending((mine ?? []) as Job[]);
+    } else {
+      setMyPending([]);
     }
     setLoading(false);
   };
@@ -74,11 +81,34 @@ const JobsPage = () => {
             <h1 className="font-display text-3xl md:text-4xl font-semibold text-primary">Job & Opportunity Board</h1>
             <p className="text-muted-foreground mt-2">Curated roles posted by COOU alumni and partner companies.</p>
           </div>
-          <div className="flex gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
             <Stat label="Open roles" value={jobs.length} />
             <Stat label="Applied" value={appliedIds.size} />
+            {user ? (
+              <Button variant="hero" onClick={() => setPostOpen(true)} aria-label="Post a job">
+                <Plus className="w-4 h-4" /> Post a job
+              </Button>
+            ) : (
+              <Button variant="hero" asChild aria-label="Sign in to post a job">
+                <Link to="/auth">Sign in to post</Link>
+              </Button>
+            )}
           </div>
         </div>
+
+        {user && myPending.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-gold/40 bg-gold/5 p-4">
+            <div className="text-xs uppercase tracking-wider font-semibold text-gold mb-2">Your submissions awaiting review</div>
+            <ul className="space-y-1 text-sm">
+              {myPending.map((j) => (
+                <li key={j.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate"><span className="font-medium">{j.title}</span> — {j.company}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${j.status === "rejected" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>{j.status}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="rounded-2xl bg-card border border-border/60 p-4 md:p-5 shadow-card">
           <div className="grid md:grid-cols-12 gap-3">
@@ -190,6 +220,21 @@ const JobsPage = () => {
           {applyJob && <ApplyForm job={applyJob} onSubmit={(letter) => submitApplication(applyJob, letter)} />}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={postOpen} onOpenChange={setPostOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <PostJobForm
+            onSubmit={async (payload) => {
+              if (!user) return;
+              const { error } = await supabase.from("jobs").insert({ ...payload, posted_by: user.id });
+              if (error) { toast.error(error.message); return; }
+              toast.success("Submitted! Awaiting admin approval.");
+              setPostOpen(false);
+              load();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 };
@@ -221,6 +266,45 @@ const ApplyForm = ({ job, onSubmit }: { job: Job; onSubmit: (letter: string) => 
         <div className="text-xs text-muted-foreground mt-1 text-right">{letter.length}/1500</div>
       </div>
       <DialogFooter><Button variant="hero" disabled={!valid} onClick={() => onSubmit(letter)}>Submit application</Button></DialogFooter>
+    </>
+  );
+};
+
+type JobPayload = { title: string; company: string; location: string; type: string; description: string; apply_url: string };
+
+const PostJobForm = ({ onSubmit }: { onSubmit: (p: JobPayload) => Promise<void> | void }) => {
+  const [form, setForm] = useState<JobPayload>({ title: "", company: "", location: "", type: "Full-time", description: "", apply_url: "" });
+  const [busy, setBusy] = useState(false);
+  const valid = form.title.trim().length >= 3 && form.company.trim().length >= 2 && form.description.trim().length >= 30;
+  const update = (k: keyof JobPayload) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setForm({ ...form, [k]: e.target.value });
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="font-display text-primary">Post a job</DialogTitle>
+        <p className="text-sm text-muted-foreground">Submissions are reviewed by admins before going live.</p>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div><Label>Title *</Label><Input value={form.title} onChange={update("title")} maxLength={120} placeholder="Senior Frontend Engineer" /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>Company *</Label><Input value={form.company} onChange={update("company")} maxLength={120} /></div>
+          <div><Label>Location</Label><Input value={form.location} onChange={update("location")} maxLength={120} placeholder="Lagos, Nigeria / Remote" /></div>
+        </div>
+        <div><Label>Type</Label>
+          <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={update("type")} aria-label="Type">
+            <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option>
+          </select>
+        </div>
+        <div><Label>Description * <span className="text-xs text-muted-foreground">(min 30 chars)</span></Label>
+          <Textarea rows={5} value={form.description} onChange={update("description")} maxLength={3000} />
+        </div>
+        <div><Label>Apply URL</Label><Input value={form.apply_url} onChange={update("apply_url")} placeholder="https://…" maxLength={500} /></div>
+      </div>
+      <DialogFooter>
+        <Button variant="hero" disabled={!valid || busy} onClick={async () => { setBusy(true); await onSubmit(form); setBusy(false); }}>
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Submit for review
+        </Button>
+      </DialogFooter>
     </>
   );
 };

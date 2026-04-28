@@ -193,6 +193,9 @@ export type Database = {
           id: string
           location: string | null
           posted_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           title: string
           type: string | null
           updated_at: string
@@ -205,6 +208,9 @@ export type Database = {
           id?: string
           location?: string | null
           posted_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           title: string
           type?: string | null
           updated_at?: string
@@ -217,6 +223,9 @@ export type Database = {
           id?: string
           location?: string | null
           posted_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           title?: string
           type?: string | null
           updated_at?: string
