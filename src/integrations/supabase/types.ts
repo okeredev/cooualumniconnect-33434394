@@ -14,16 +14,291 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      directory_reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          resolved: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          resolved?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          reported_user_id?: string
+          reporter_id?: string
+          resolved?: boolean
+        }
+        Relationships: []
+      }
+      education: {
+        Row: {
+          created_at: string
+          degree: string | null
+          end_year: number | null
+          field: string | null
+          id: string
+          school: string
+          start_year: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          degree?: string | null
+          end_year?: number | null
+          field?: string | null
+          id?: string
+          school: string
+          start_year?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          degree?: string | null
+          end_year?: number | null
+          field?: string | null
+          id?: string
+          school?: string
+          start_year?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      employment: {
+        Row: {
+          company: string
+          created_at: string
+          current: boolean
+          description: string | null
+          end_date: string | null
+          id: string
+          start_date: string | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          current?: boolean
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          current?: boolean
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          apply_url: string | null
+          company: string
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          posted_by: string | null
+          title: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          apply_url?: string | null
+          company: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          posted_by?: string | null
+          title: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apply_url?: string | null
+          company?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          posted_by?: string | null
+          title?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          bio: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          department: string | null
+          display_name: string | null
+          email: string | null
+          github: string | null
+          graduation_year: number | null
+          id: string
+          linkedin: string | null
+          phone: string | null
+          state: string | null
+          suspended: boolean
+          twitter: string | null
+          updated_at: string
+          user_id: string
+          verified: boolean
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          github?: string | null
+          graduation_year?: number | null
+          id?: string
+          linkedin?: string | null
+          phone?: string | null
+          state?: string | null
+          suspended?: boolean
+          twitter?: string | null
+          updated_at?: string
+          user_id: string
+          verified?: boolean
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          github?: string | null
+          graduation_year?: number | null
+          id?: string
+          linkedin?: string | null
+          phone?: string | null
+          state?: string | null
+          suspended?: boolean
+          twitter?: string | null
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +425,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
