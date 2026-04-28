@@ -31,6 +31,8 @@ const JobsPage = () => {
   const [type, setType] = useState("all");
   const [activeJob, setActiveJob] = useState<Job | null>(null);
   const [applyJob, setApplyJob] = useState<Job | null>(null);
+  const [postOpen, setPostOpen] = useState(false);
+  const [myPending, setMyPending] = useState<Job[]>([]);
 
   useEffect(() => {
     document.title = "Job Board — COOU Alumni Connect";
@@ -39,11 +41,15 @@ const JobsPage = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data: js } = await supabase.from("jobs").select("*").order("created_at", { ascending: false });
+    const { data: js } = await supabase.from("jobs").select("*").eq("status", "approved").order("created_at", { ascending: false });
     setJobs((js ?? []) as Job[]);
     if (user) {
       const { data: apps } = await supabase.from("applications").select("job_id").eq("user_id", user.id);
       setAppliedIds(new Set((apps ?? []).map((a: any) => a.job_id)));
+      const { data: mine } = await supabase.from("jobs").select("*").eq("posted_by", user.id).neq("status", "approved").order("created_at", { ascending: false });
+      setMyPending((mine ?? []) as Job[]);
+    } else {
+      setMyPending([]);
     }
     setLoading(false);
   };
