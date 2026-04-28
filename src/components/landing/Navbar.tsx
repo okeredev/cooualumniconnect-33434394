@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import coouLogo from "@/assets/coou-logo.png";
 
 const links = [
   { label: "Directory", href: "/directory" },
@@ -16,12 +17,10 @@ export const Navbar = () => {
   return (
     <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border/60">
       <nav className="container flex items-center justify-between h-16">
-        <a href="#" className="flex items-center gap-2 group">
-          <span className="grid place-items-center w-9 h-9 rounded-lg bg-gradient-hero shadow-elegant">
-            <GraduationCap className="w-5 h-5 text-gold" />
-          </span>
-          <span className="font-display font-semibold text-lg tracking-tight">
-            Alumin<span className="text-primary">AI</span>
+        <a href="#" className="flex items-center gap-2.5 group">
+          <img src={coouLogo} alt="COOU" className="w-10 h-10 object-contain" />
+          <span className="font-display font-semibold text-base sm:text-lg tracking-tight leading-tight">
+            COOU <span className="text-primary">Alumni Connect</span>
           </span>
         </a>
 

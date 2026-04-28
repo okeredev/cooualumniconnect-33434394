@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import coouLogo from "@/assets/coou-logo.png";
 
 export const Footer = () => {
   return (
@@ -6,16 +6,14 @@ export const Footer = () => {
       <div className="container py-14">
         <div className="grid md:grid-cols-4 gap-10">
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2">
-              <span className="grid place-items-center w-9 h-9 rounded-lg bg-gradient-hero">
-                <GraduationCap className="w-5 h-5 text-gold" />
-              </span>
-              <span className="font-display font-semibold text-lg">
-                Alumin<span className="text-primary">AI</span>
+            <div className="flex items-center gap-2.5">
+              <img src={coouLogo} alt="COOU" className="w-10 h-10 object-contain" />
+              <span className="font-display font-semibold text-base leading-tight">
+                COOU <span className="text-primary">Alumni Connect</span>
               </span>
             </div>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs">
-              Smart alumni networking, mentorship, and giving — designed for institutions that care.
+              The official alumni networking, mentorship and career platform of Chukwuemeka Odumegwu Ojukwu University.
             </p>
           </div>
 
@@ -38,8 +36,8 @@ export const Footer = () => {
         </div>
 
         <div className="mt-14 pt-6 border-t border-border/60 flex flex-col md:flex-row justify-between gap-4 text-xs text-muted-foreground">
-          <div>© 2026 AluminAI. Crafted for graduates everywhere.</div>
-          <div>Made with intention · Stockholm</div>
+          <div>© 2026 Chukwuemeka Odumegwu Ojukwu University. All rights reserved.</div>
+          <div>Igbariam · Uli · Awka Campuses</div>
         </div>
       </div>
     </footer>
