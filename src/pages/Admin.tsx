@@ -351,15 +351,20 @@ const JobsTab = () => {
       </div>
       <div className="grid gap-3">
         {jobs.map((j) => (
-          <div key={j.id} className="rounded-2xl bg-card border border-border/60 p-5 flex items-start justify-between gap-4">
-            <div>
-              <div className="font-display font-semibold text-primary">{j.title}</div>
-              <div className="text-sm text-muted-foreground">{j.company} · {j.location} · {j.type}</div>
+          <div key={j.id} className="rounded-2xl bg-card border border-border/60 p-5 flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-display font-semibold text-primary">{j.title}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${j.status === "approved" ? "bg-green-100 text-green-800" : j.status === "rejected" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{j.status}</span>
+              </div>
+              <div className="text-sm text-muted-foreground">{j.company} · {j.location || "—"} · {j.type || "—"}</div>
               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{j.description}</p>
             </div>
-            <div className="flex gap-1">
-              <Button size="sm" variant="ghost" onClick={() => setEditing(j)}><Pencil className="w-4 h-4" /></Button>
-              <Button size="sm" variant="ghost" onClick={() => remove(j.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+            <div className="flex gap-1 flex-wrap">
+              {j.status !== "approved" && <Button size="sm" variant="outline" onClick={() => setStatus(j.id, "approved")} aria-label="Approve"><Check className="w-4 h-4" /></Button>}
+              {j.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => setStatus(j.id, "rejected")} aria-label="Reject"><XIcon className="w-4 h-4" /></Button>}
+              <Button size="sm" variant="ghost" onClick={() => setEditing(j)} aria-label="Edit"><Pencil className="w-4 h-4" /></Button>
+              <Button size="sm" variant="ghost" onClick={() => remove(j.id)} aria-label="Delete"><Trash2 className="w-4 h-4 text-destructive" /></Button>
             </div>
           </div>
         ))}
