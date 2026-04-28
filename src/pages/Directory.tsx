@@ -12,7 +12,7 @@ const DirectoryPage = () => {
   const [loc, setLoc] = useState<string>("all");
 
   useEffect(() => {
-    document.title = "Alumni Directory — AluminAI";
+    document.title = "Alumni Directory — COOU Alumni Connect";
   }, []);
 
   const results = useMemo(() => {

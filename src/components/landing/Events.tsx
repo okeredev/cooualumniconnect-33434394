@@ -2,9 +2,9 @@ import { Calendar, MapPin, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const events = [
-  { date: "Nov 14", title: "Class of 2015 — 10 Year Reunion", location: "Campus · Main Hall", type: "In-person", tag: "Reunion" },
+  { date: "Nov 14", title: "Class of 2015 — 10 Year Reunion", location: "Igbariam Campus · Main Hall", type: "In-person", tag: "Reunion" },
   { date: "Nov 22", title: "AI in Finance — Alumni Panel", location: "Virtual · Zoom", type: "Virtual", tag: "Panel" },
-  { date: "Dec 03", title: "Year-End Mentor Mixer", location: "London · The Ned", type: "In-person", tag: "Networking" },
+  { date: "Dec 03", title: "Year-End Mentor Mixer", location: "Lagos · Eko Hotel", type: "In-person", tag: "Networking" },
 ];
 
 export const Events = () => {

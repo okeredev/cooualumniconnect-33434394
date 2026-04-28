@@ -52,7 +52,7 @@ const DashboardPage = () => {
   const [draft, setDraft] = useState<Profile>(profile);
 
   useEffect(() => {
-    document.title = "Dashboard — AluminAI";
+    document.title = "Dashboard — COOU Alumni Connect";
   }, []);
 
   const initials = profile.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("");

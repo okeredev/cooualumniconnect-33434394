@@ -9,8 +9,8 @@ import { JOBS, JOB_CATEGORIES, type Job } from "@/data/coou";
 import { Search, MapPin, Briefcase, Bookmark, BookmarkCheck, Sparkles, Building2, Clock, X } from "lucide-react";
 import { toast } from "sonner";
 
-const STORAGE_SAVED = "aluminai_saved_jobs";
-const STORAGE_APPS = "aluminai_applications";
+const STORAGE_SAVED = "coou_saved_jobs";
+const STORAGE_APPS = "coou_applications";
 
 const JobsPage = () => {
   const [q, setQ] = useState("");
@@ -26,7 +26,7 @@ const JobsPage = () => {
   const [activeJob, setActiveJob] = useState<Job | null>(null);
   const [applyJob, setApplyJob] = useState<Job | null>(null);
 
-  useEffect(() => { document.title = "Job Board — AluminAI"; }, []);
+  useEffect(() => { document.title = "Job Board — COOU Alumni Connect"; }, []);
   useEffect(() => { localStorage.setItem(STORAGE_SAVED, JSON.stringify(saved)); }, [saved]);
   useEffect(() => { localStorage.setItem(STORAGE_APPS, JSON.stringify(applications)); }, [applications]);
 

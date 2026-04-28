@@ -10,7 +10,7 @@ export const CTA = () => {
           <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-gold/20 blur-3xl" />
 
           <div className="relative max-w-2xl mx-auto">
-            <div className="inline-block text-xs uppercase tracking-[0.2em] text-gold font-semibold mb-5">Join AluminAI</div>
+            <div className="inline-block text-xs uppercase tracking-[0.2em] text-gold font-semibold mb-5">Join COOU Alumni Connect</div>
             <h2 className="font-display text-4xl md:text-6xl font-semibold text-primary-foreground leading-[1.05] text-balance">
               Your network is waiting on the other side.
             </h2>

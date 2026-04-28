@@ -56,7 +56,7 @@ export const Features = () => {
             Everything alumni need, in one elegant place.
           </h2>
           <p className="mt-5 text-lg text-muted-foreground">
-            From your first connection to your hundredth hire — AluminAI grows with your community.
+            From your first connection to your hundredth hire — COOU Alumni Connect grows with your community.
           </p>
         </div>
 
