@@ -80,11 +80,34 @@ const JobsPage = () => {
             <h1 className="font-display text-3xl md:text-4xl font-semibold text-primary">Job & Opportunity Board</h1>
             <p className="text-muted-foreground mt-2">Curated roles posted by COOU alumni and partner companies.</p>
           </div>
-          <div className="flex gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
             <Stat label="Open roles" value={jobs.length} />
             <Stat label="Applied" value={appliedIds.size} />
+            {user ? (
+              <Button variant="hero" onClick={() => setPostOpen(true)} aria-label="Post a job">
+                <Plus className="w-4 h-4" /> Post a job
+              </Button>
+            ) : (
+              <Button variant="hero" asChild aria-label="Sign in to post a job">
+                <Link to="/auth">Sign in to post</Link>
+              </Button>
+            )}
           </div>
         </div>
+
+        {user && myPending.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-gold/40 bg-gold/5 p-4">
+            <div className="text-xs uppercase tracking-wider font-semibold text-gold mb-2">Your submissions awaiting review</div>
+            <ul className="space-y-1 text-sm">
+              {myPending.map((j) => (
+                <li key={j.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate"><span className="font-medium">{j.title}</span> — {j.company}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${j.status === "rejected" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>{j.status}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="rounded-2xl bg-card border border-border/60 p-4 md:p-5 shadow-card">
           <div className="grid md:grid-cols-12 gap-3">
