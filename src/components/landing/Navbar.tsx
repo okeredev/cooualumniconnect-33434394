@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Menu } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const links = [
-  { label: "Network", href: "#network" },
-  { label: "Careers", href: "#careers" },
+  { label: "Directory", href: "/directory" },
+  { label: "Jobs", href: "/jobs" },
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Mentorship", href: "#mentorship" },
   { label: "Events", href: "#events" },
-  { label: "Give", href: "#give" },
 ];
 
 export const Navbar = () => {
@@ -26,19 +27,17 @@ export const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-8">
           {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {l.label}
-            </a>
+            l.href.startsWith("/") ? (
+              <Link key={l.href} to={l.href} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{l.label}</Link>
+            ) : (
+              <a key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">{l.label}</a>
+            )
           ))}
         </div>
 
         <div className="hidden md:flex items-center gap-3">
           <Button variant="ghost" size="sm">Sign in</Button>
-          <Button variant="hero" size="sm">Join the network</Button>
+          <Button variant="hero" size="sm" asChild><Link to="/dashboard">Open dashboard</Link></Button>
         </div>
 
         <button className="md:hidden p-2" onClick={() => setOpen(!open)} aria-label="Menu">
