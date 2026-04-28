@@ -250,8 +250,11 @@ const UsersTab = () => {
 
   return (
     <div className="space-y-4">
-      <Input placeholder="Search users..." value={q} onChange={(e) => setQ(e.target.value)} className="max-w-md" />
-      <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+      <div className="flex flex-wrap gap-2 items-center justify-between">
+        <Input placeholder="Search users..." value={q} onChange={(e) => setQ(e.target.value)} className="max-w-md" aria-label="Search users" />
+        <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-users-filtered-${Date.now()}`, filtered as any)} aria-label="Export filtered users CSV"><Download className="w-4 h-4" /> Export ({filtered.length})</Button>
+      </div>
+      <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
             <tr><th className="text-left p-3">User</th><th className="text-left p-3">Roles</th><th className="text-left p-3">Status</th><th className="text-right p-3">Actions</th></tr>
