@@ -31,7 +31,7 @@ const DEFAULT_PROFILE: Profile = {
   gradYear: 2018,
   faculty: "Engineering",
   department: "Computer Science",
-  location: "Lagos, NG",
+  location: "Lagos, Nigeria",
   jobTitle: "Senior Software Engineer",
   company: "Flutterwave",
   bio: "COOU Computer Science '18. Building payment infrastructure across Africa. Open to mentoring final-year students.",
@@ -43,7 +43,7 @@ const DashboardPage = () => {
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState<Profile>(() => {
     try {
-      const stored = localStorage.getItem("aluminai_profile");
+      const stored = localStorage.getItem("coou_profile");
       return stored ? JSON.parse(stored) : DEFAULT_PROFILE;
     } catch {
       return DEFAULT_PROFILE;
@@ -59,7 +59,7 @@ const DashboardPage = () => {
 
   const save = () => {
     setProfile(draft);
-    localStorage.setItem("aluminai_profile", JSON.stringify(draft));
+    localStorage.setItem("coou_profile", JSON.stringify(draft));
     setEditing(false);
     toast.success("Profile updated");
   };
