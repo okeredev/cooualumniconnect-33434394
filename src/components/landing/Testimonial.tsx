@@ -2,14 +2,14 @@ import { Quote } from "lucide-react";
 
 const quotes = [
   {
-    text: "AluminAI matched me with a mentor who became my co-founder two years later. The platform doesn't just connect — it builds futures.",
-    name: "Elena Marquez",
+    text: "COOU Alumni Connect matched me with a mentor who became my co-founder two years later. The platform doesn't just connect — it builds futures.",
+    name: "Chiamaka Nnamdi",
     role: "Co-founder, Halcyon Labs · Class of 2018",
   },
   {
     text: "We raised our scholarship goal in three weeks. The donor leaderboard turned giving into a community celebration.",
-    name: "Dr. Marcus Hall",
-    role: "Director of Advancement",
+    name: "Dr. Emeka Nwosu",
+    role: "Director of Advancement, COOU",
   },
 ];
 

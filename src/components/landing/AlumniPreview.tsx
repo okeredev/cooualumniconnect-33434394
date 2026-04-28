@@ -1,10 +1,10 @@
 import { MapPin, Briefcase } from "lucide-react";
 
 const alumni = [
-  { name: "Amara Okafor", role: "Senior PM, Stripe", year: "Class of 2017", dept: "Computer Science", location: "London", initials: "AO", tone: "from-emerald-700 to-emerald-900" },
-  { name: "Daniel Reyes", role: "Founder, Northwind", year: "Class of 2014", dept: "Business", location: "Lagos", initials: "DR", tone: "from-amber-600 to-amber-800" },
-  { name: "Priya Natarajan", role: "AI Researcher, DeepMind", year: "Class of 2019", dept: "Data Science", location: "Boston", initials: "PN", tone: "from-emerald-600 to-teal-800" },
-  { name: "Jordan Mensah", role: "Design Lead, Figma", year: "Class of 2016", dept: "Design", location: "Berlin", initials: "JM", tone: "from-yellow-600 to-amber-900" },
+  { name: "Amara Okafor", role: "Senior PM, Flutterwave", year: "Class of 2017", dept: "Computer Science", location: "Lagos", initials: "AO", tone: "from-emerald-700 to-emerald-900" },
+  { name: "Daniel Reyes", role: "Founder, Northwind", year: "Class of 2014", dept: "Business", location: "Abuja", initials: "DR", tone: "from-amber-600 to-amber-800" },
+  { name: "Priya Natarajan", role: "AI Researcher, Data Science Nigeria", year: "Class of 2019", dept: "Data Science", location: "Ibadan", initials: "PN", tone: "from-emerald-600 to-teal-800" },
+  { name: "Jordan Mensah", role: "Design Lead, Andela", year: "Class of 2016", dept: "Design", location: "Awka", initials: "JM", tone: "from-yellow-600 to-amber-900" },
 ];
 
 export const AlumniPreview = () => {
