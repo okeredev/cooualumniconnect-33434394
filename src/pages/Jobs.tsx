@@ -270,4 +270,43 @@ const ApplyForm = ({ job, onSubmit }: { job: Job; onSubmit: (letter: string) => 
   );
 };
 
+type JobPayload = { title: string; company: string; location: string; type: string; description: string; apply_url: string };
+
+const PostJobForm = ({ onSubmit }: { onSubmit: (p: JobPayload) => Promise<void> | void }) => {
+  const [form, setForm] = useState<JobPayload>({ title: "", company: "", location: "", type: "Full-time", description: "", apply_url: "" });
+  const [busy, setBusy] = useState(false);
+  const valid = form.title.trim().length >= 3 && form.company.trim().length >= 2 && form.description.trim().length >= 30;
+  const update = (k: keyof JobPayload) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setForm({ ...form, [k]: e.target.value });
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="font-display text-primary">Post a job</DialogTitle>
+        <p className="text-sm text-muted-foreground">Submissions are reviewed by admins before going live.</p>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div><Label>Title *</Label><Input value={form.title} onChange={update("title")} maxLength={120} placeholder="Senior Frontend Engineer" /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>Company *</Label><Input value={form.company} onChange={update("company")} maxLength={120} /></div>
+          <div><Label>Location</Label><Input value={form.location} onChange={update("location")} maxLength={120} placeholder="Lagos, Nigeria / Remote" /></div>
+        </div>
+        <div><Label>Type</Label>
+          <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={update("type")} aria-label="Type">
+            <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option>
+          </select>
+        </div>
+        <div><Label>Description * <span className="text-xs text-muted-foreground">(min 30 chars)</span></Label>
+          <Textarea rows={5} value={form.description} onChange={update("description")} maxLength={3000} />
+        </div>
+        <div><Label>Apply URL</Label><Input value={form.apply_url} onChange={update("apply_url")} placeholder="https://…" maxLength={500} /></div>
+      </div>
+      <DialogFooter>
+        <Button variant="hero" disabled={!valid || busy} onClick={async () => { setBusy(true); await onSubmit(form); setBusy(false); }}>
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Submit for review
+        </Button>
+      </DialogFooter>
+    </>
+  );
+};
+
 export default JobsPage;
