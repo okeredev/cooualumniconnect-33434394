@@ -33,10 +33,10 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-gradient-cream">
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/60">
-        <div className="container flex items-center justify-between h-16">
-          <NavLink to="/" className="flex items-center gap-2.5">
-            <img src={coouLogo} alt="COOU" className="w-10 h-10 object-contain" />
-            <span className="font-display font-semibold text-base leading-tight hidden sm:inline">
+        <div className="container flex items-center justify-between h-20">
+          <NavLink to="/" className="flex items-center gap-3 group" aria-label="COOU Alumni Connect home">
+            <img src={coouLogo} alt="COOU Alumni Connect" className="w-12 h-12 md:w-14 md:h-14 object-contain drop-shadow-[0_2px_8px_hsl(var(--primary)/0.25)] group-hover:scale-105 transition-transform" />
+            <span className="font-display font-bold text-lg md:text-xl leading-none hidden sm:inline">
               COOU <span className="text-primary">Alumni Connect</span>
             </span>
           </NavLink>

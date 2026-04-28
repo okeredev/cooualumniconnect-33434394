@@ -7,7 +7,7 @@ export const Footer = () => {
         <div className="grid md:grid-cols-4 gap-10">
           <div className="md:col-span-1">
             <div className="flex items-center gap-2.5">
-              <img src={coouLogo} alt="COOU" className="w-10 h-10 object-contain" />
+              <img src={coouLogo} alt="COOU Alumni Connect" className="w-14 h-14 object-contain drop-shadow-lg" />
               <span className="font-display font-semibold text-base leading-tight">
                 COOU <span className="text-primary">Alumni Connect</span>
               </span>
