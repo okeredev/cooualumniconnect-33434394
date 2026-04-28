@@ -20,6 +20,7 @@ type Job = {
   description: string | null;
   apply_url: string | null;
   created_at: string;
+  status?: string;
 };
 
 const JobsPage = () => {
