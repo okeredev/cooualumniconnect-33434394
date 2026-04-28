@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Users, Briefcase } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/coou-campus-gate.jpg";
 
 export const Hero = () => {
@@ -30,11 +31,11 @@ export const Hero = () => {
             </p>
 
             <div className="mt-10 flex flex-wrap gap-3">
-              <Button variant="hero" size="lg" className="text-base">
-                Join the network <ArrowRight className="w-4 h-4" />
+              <Button variant="hero" size="lg" className="text-base" asChild>
+                <Link to="/auth" aria-label="Join the COOU alumni network">Join the network <ArrowRight className="w-4 h-4" /></Link>
               </Button>
-              <Button variant="outline" size="lg" className="text-base border-primary/20">
-                Explore directory
+              <Button variant="outline" size="lg" className="text-base border-primary/20" asChild>
+                <Link to="/directory" aria-label="Explore alumni directory">Explore directory</Link>
               </Button>
             </div>
 
