@@ -323,7 +323,8 @@ const JobsTab = () => {
 
   const save = async () => {
     if (!editing?.title || !editing?.company) { toast.error("Title and company required"); return; }
-    const payload = { title: editing.title, company: editing.company, location: editing.location, type: editing.type, description: editing.description, apply_url: editing.apply_url };
+    const payload: any = { title: editing.title, company: editing.company, location: editing.location, type: editing.type, description: editing.description, apply_url: editing.apply_url };
+    if (!editing.id) payload.status = "approved"; // admin posts go live immediately
     const { error } = editing.id
       ? await supabase.from("jobs").update(payload).eq("id", editing.id)
       : await supabase.from("jobs").insert({ ...payload, posted_by: (await supabase.auth.getUser()).data.user?.id });
@@ -335,12 +336,19 @@ const JobsTab = () => {
     await supabase.from("jobs").delete().eq("id", id);
     toast.success("Deleted"); load();
   };
+  const setStatus = async (id: string, status: string) => {
+    await supabase.from("jobs").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    toast.success(`Marked ${status}`); load();
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
 
   return (
     <div className="space-y-4">
-      <Button onClick={() => setEditing({})}><Plus className="w-4 h-4" /> New job</Button>
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <Button onClick={() => setEditing({})} aria-label="Create new job"><Plus className="w-4 h-4" /> New job</Button>
+        <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-jobs-${Date.now()}`, jobs as any)} aria-label="Export jobs CSV"><Download className="w-4 h-4" /> Export ({jobs.length})</Button>
+      </div>
       <div className="grid gap-3">
         {jobs.map((j) => (
           <div key={j.id} className="rounded-2xl bg-card border border-border/60 p-5 flex items-start justify-between gap-4">
