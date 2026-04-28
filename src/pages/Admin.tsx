@@ -35,9 +35,10 @@ const AdminPage = () => {
         </div>
 
         <Tabs defaultValue="analytics">
-          <TabsList className="grid w-full max-w-2xl grid-cols-5">
+          <TabsList className="flex w-full overflow-x-auto md:grid md:max-w-3xl md:grid-cols-6">
             <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1.5" />Analytics</TabsTrigger>
             <TabsTrigger value="users"><Users className="w-4 h-4 mr-1.5" />Users</TabsTrigger>
+            <TabsTrigger value="moderation"><Clock className="w-4 h-4 mr-1.5" />Moderation</TabsTrigger>
             <TabsTrigger value="jobs"><Briefcase className="w-4 h-4 mr-1.5" />Jobs</TabsTrigger>
             <TabsTrigger value="events"><Calendar className="w-4 h-4 mr-1.5" />Events</TabsTrigger>
             <TabsTrigger value="reports"><Flag className="w-4 h-4 mr-1.5" />Reports</TabsTrigger>
@@ -45,6 +46,7 @@ const AdminPage = () => {
 
           <TabsContent value="analytics" className="mt-6"><AnalyticsTab /></TabsContent>
           <TabsContent value="users" className="mt-6"><UsersTab /></TabsContent>
+          <TabsContent value="moderation" className="mt-6"><ModerationTab /></TabsContent>
           <TabsContent value="jobs" className="mt-6"><JobsTab /></TabsContent>
           <TabsContent value="events" className="mt-6"><EventsTab /></TabsContent>
           <TabsContent value="reports" className="mt-6"><ReportsTab /></TabsContent>
