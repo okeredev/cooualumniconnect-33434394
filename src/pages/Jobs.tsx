@@ -220,6 +220,21 @@ const JobsPage = () => {
           {applyJob && <ApplyForm job={applyJob} onSubmit={(letter) => submitApplication(applyJob, letter)} />}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={postOpen} onOpenChange={setPostOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <PostJobForm
+            onSubmit={async (payload) => {
+              if (!user) return;
+              const { error } = await supabase.from("jobs").insert({ ...payload, posted_by: user.id });
+              if (error) { toast.error(error.message); return; }
+              toast.success("Submitted! Awaiting admin approval.");
+              setPostOpen(false);
+              load();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 };
