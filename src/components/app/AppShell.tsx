@@ -1,14 +1,35 @@
-import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, Briefcase, Bell, Search } from "lucide-react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Users, Briefcase, Bell, Search, Shield, LogOut } from "lucide-react";
 import coouLogo from "@/assets/coou-logo.png";
-
-const links = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/directory", label: "Directory", icon: Users },
-  { to: "/jobs", label: "Jobs", icon: Briefcase },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const AppShell = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const links = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/directory", label: "Directory", icon: Users },
+    { to: "/jobs", label: "Jobs", icon: Briefcase },
+    ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
+  ];
+
+  const initials = (user?.user_metadata?.display_name || user?.email || "U")
+    .split(/[ @]/)
+    .map((p: string) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <div className="min-h-screen bg-gradient-cream">
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/60">
@@ -45,9 +66,27 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
               <Bell className="w-4 h-4 text-muted-foreground" />
               <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-gold" />
             </button>
-            <div className="w-9 h-9 rounded-full bg-gradient-hero text-primary-foreground grid place-items-center text-xs font-semibold">
-              CO
-            </div>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-9 h-9 rounded-full bg-gradient-hero text-primary-foreground grid place-items-center text-xs font-semibold" aria-label="Account">
+                    {initials}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild><Link to="/dashboard">Dashboard</Link></DropdownMenuItem>
+                  {isAdmin && <DropdownMenuItem asChild><Link to="/admin">Admin Panel</Link></DropdownMenuItem>}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={async () => { await signOut(); navigate("/"); }}>
+                    <LogOut className="w-4 h-4 mr-2" /> Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button size="sm" variant="hero" asChild><Link to="/auth">Sign in</Link></Button>
+            )}
           </div>
         </div>
 
