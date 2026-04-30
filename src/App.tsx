@@ -12,6 +12,11 @@ import Directory from "./pages/Directory.tsx";
 import Jobs from "./pages/Jobs.tsx";
 import Auth from "./pages/Auth.tsx";
 import Admin from "./pages/Admin.tsx";
+import Donations from "./pages/Donations.tsx";
+import Mentorship from "./pages/Mentorship.tsx";
+import Chat from "./pages/Chat.tsx";
+import Events from "./pages/Events.tsx";
+import Resources from "./pages/Resources.tsx";
 
 const queryClient = new QueryClient();
 
