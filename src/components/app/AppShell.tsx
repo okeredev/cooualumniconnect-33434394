@@ -1,5 +1,5 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Briefcase, Bell, Search, Shield, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Bell, Search, Shield, LogOut, Heart, GraduationCap, MessageCircle, Calendar, BookOpen } from "lucide-react";
 import coouLogo from "@/assets/coou-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,11 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/directory", label: "Directory", icon: Users },
     { to: "/jobs", label: "Jobs", icon: Briefcase },
+    { to: "/mentorship", label: "Mentorship", icon: GraduationCap },
+    { to: "/events", label: "Events", icon: Calendar },
+    { to: "/chat", label: "Chat", icon: MessageCircle },
+    { to: "/resources", label: "Resources", icon: BookOpen },
+    { to: "/donations", label: "Donate", icon: Heart },
     ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
@@ -41,13 +46,13 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
             </span>
           </NavLink>
 
-          <nav className="hidden md:flex items-center gap-1 bg-muted/50 rounded-full p-1">
+          <nav className="hidden lg:flex items-center gap-1 bg-muted/50 rounded-full p-1 max-w-[60vw] overflow-x-auto">
             {links.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                     isActive ? "bg-card shadow-card text-primary" : "text-muted-foreground hover:text-foreground"
                   }`
                 }
@@ -91,7 +96,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* Mobile nav */}
-        <nav className="md:hidden border-t border-border/60 bg-background/80">
+        <nav className="lg:hidden border-t border-border/60 bg-background/80">
           <div className="container flex items-center gap-1 py-2 overflow-x-auto">
             {links.map((l) => (
               <NavLink

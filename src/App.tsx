@@ -12,6 +12,11 @@ import Directory from "./pages/Directory.tsx";
 import Jobs from "./pages/Jobs.tsx";
 import Auth from "./pages/Auth.tsx";
 import Admin from "./pages/Admin.tsx";
+import Donations from "./pages/Donations.tsx";
+import Mentorship from "./pages/Mentorship.tsx";
+import Chat from "./pages/Chat.tsx";
+import Events from "./pages/Events.tsx";
+import Resources from "./pages/Resources.tsx";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +34,11 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
             <Route path="/directory" element={<ProtectedRoute><Directory /></ProtectedRoute>} />
             <Route path="/jobs" element={<Jobs />} />
+            <Route path="/donations" element={<ProtectedRoute><Donations /></ProtectedRoute>} />
+            <Route path="/mentorship" element={<ProtectedRoute><Mentorship /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
