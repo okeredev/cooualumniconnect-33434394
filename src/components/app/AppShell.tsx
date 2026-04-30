@@ -46,13 +46,13 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
             </span>
           </NavLink>
 
-          <nav className="hidden md:flex items-center gap-1 bg-muted/50 rounded-full p-1">
+          <nav className="hidden lg:flex items-center gap-1 bg-muted/50 rounded-full p-1 max-w-[60vw] overflow-x-auto">
             {links.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                     isActive ? "bg-card shadow-card text-primary" : "text-muted-foreground hover:text-foreground"
                   }`
                 }
