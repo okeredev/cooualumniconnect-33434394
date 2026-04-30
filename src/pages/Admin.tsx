@@ -35,12 +35,15 @@ const AdminPage = () => {
         </div>
 
         <Tabs defaultValue="analytics">
-          <TabsList className="flex w-full overflow-x-auto md:grid md:max-w-3xl md:grid-cols-6">
+          <TabsList className="flex w-full overflow-x-auto md:grid md:max-w-5xl md:grid-cols-9">
             <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1.5" />Analytics</TabsTrigger>
             <TabsTrigger value="users"><Users className="w-4 h-4 mr-1.5" />Users</TabsTrigger>
             <TabsTrigger value="moderation"><Clock className="w-4 h-4 mr-1.5" />Moderation</TabsTrigger>
             <TabsTrigger value="jobs"><Briefcase className="w-4 h-4 mr-1.5" />Jobs</TabsTrigger>
             <TabsTrigger value="events"><Calendar className="w-4 h-4 mr-1.5" />Events</TabsTrigger>
+            <TabsTrigger value="donations"><Heart className="w-4 h-4 mr-1.5" />Donations</TabsTrigger>
+            <TabsTrigger value="mentorship"><GraduationCap className="w-4 h-4 mr-1.5" />Mentorship</TabsTrigger>
+            <TabsTrigger value="resources"><BookOpen className="w-4 h-4 mr-1.5" />Resources</TabsTrigger>
             <TabsTrigger value="reports"><Flag className="w-4 h-4 mr-1.5" />Reports</TabsTrigger>
           </TabsList>
 
@@ -49,6 +52,9 @@ const AdminPage = () => {
           <TabsContent value="moderation" className="mt-6"><ModerationTab /></TabsContent>
           <TabsContent value="jobs" className="mt-6"><JobsTab /></TabsContent>
           <TabsContent value="events" className="mt-6"><EventsTab /></TabsContent>
+          <TabsContent value="donations" className="mt-6"><DonationsTab /></TabsContent>
+          <TabsContent value="mentorship" className="mt-6"><MentorshipTab /></TabsContent>
+          <TabsContent value="resources" className="mt-6"><ResourcesTab /></TabsContent>
           <TabsContent value="reports" className="mt-6"><ReportsTab /></TabsContent>
         </Tabs>
       </section>
