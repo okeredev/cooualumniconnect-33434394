@@ -96,7 +96,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* Mobile nav */}
-        <nav className="md:hidden border-t border-border/60 bg-background/80">
+        <nav className="lg:hidden border-t border-border/60 bg-background/80">
           <div className="container flex items-center gap-1 py-2 overflow-x-auto">
             {links.map((l) => (
               <NavLink
