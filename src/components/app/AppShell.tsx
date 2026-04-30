@@ -20,6 +20,11 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => {
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/directory", label: "Directory", icon: Users },
     { to: "/jobs", label: "Jobs", icon: Briefcase },
+    { to: "/mentorship", label: "Mentorship", icon: GraduationCap },
+    { to: "/events", label: "Events", icon: Calendar },
+    { to: "/chat", label: "Chat", icon: MessageCircle },
+    { to: "/resources", label: "Resources", icon: BookOpen },
+    { to: "/donations", label: "Donate", icon: Heart },
     ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
