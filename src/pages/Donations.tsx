@@ -53,7 +53,13 @@ const DonationsPage = () => {
     const parsed = schema.safeParse({ ...form, amount: Number(form.amount) });
     if (!parsed.success) { toast.error(parsed.error.errors[0].message); return; }
     setSaving(true);
-    const { error } = await supabase.from("donations").insert({ ...parsed.data, user_id: user.id });
+    const { error } = await supabase.from("donations").insert({
+      user_id: user.id,
+      amount: parsed.data.amount,
+      currency: parsed.data.currency,
+      purpose: parsed.data.purpose || null,
+      message: parsed.data.message || null,
+    });
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Pledge submitted — thank you!");
