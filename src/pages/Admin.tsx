@@ -513,4 +513,197 @@ const ReportsTab = () => {
   );
 };
 
+// -------- Donations --------
+const DonationsTab = () => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const load = async () => {
+    const { data } = await supabase.from("donations").select("*").order("created_at", { ascending: false });
+    setItems(data ?? []); setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const setStatus = async (id: string, status: string) => {
+    await supabase.from("donations").update({ status }).eq("id", id);
+    toast.success(`Marked ${status}`); load();
+  };
+  const remove = async (id: string) => { if (!confirm("Delete pledge?")) return; await supabase.from("donations").delete().eq("id", id); load(); };
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
+  const total = items.reduce((s, i) => s + Number(i.amount), 0);
+  const fulfilled = items.filter((i) => i.status === "fulfilled").reduce((s, i) => s + Number(i.amount), 0);
+  return (
+    <div className="space-y-4">
+      <div className="grid sm:grid-cols-3 gap-3">
+        <Stat label="Total pledges" value={items.length} />
+        <Stat label="Pledged amount" value={total.toLocaleString()} />
+        <Stat label="Fulfilled" value={fulfilled.toLocaleString()} />
+      </div>
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-donations-${Date.now()}`, items as any)}><Download className="w-4 h-4" /> Export</Button>
+      </div>
+      <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+            <tr><th className="text-left p-3">Donor</th><th className="text-left p-3">Amount</th><th className="text-left p-3">Purpose</th><th className="text-left p-3">Status</th><th className="text-right p-3">Actions</th></tr>
+          </thead>
+          <tbody>
+            {items.map((d) => (
+              <tr key={d.id} className="border-t border-border/60">
+                <td className="p-3 text-xs"><code>{d.user_id.slice(0, 8)}…</code><div className="text-[11px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</div></td>
+                <td className="p-3 font-medium">{d.currency} {Number(d.amount).toLocaleString()}</td>
+                <td className="p-3 text-muted-foreground">{d.purpose || "—"}</td>
+                <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${d.status === "fulfilled" ? "bg-green-100 text-green-800" : d.status === "cancelled" ? "bg-muted text-muted-foreground" : "bg-amber-100 text-amber-800"}`}>{d.status}</span></td>
+                <td className="p-3 text-right">
+                  <div className="flex gap-1 justify-end">
+                    {d.status !== "fulfilled" && <Button size="sm" variant="outline" onClick={() => setStatus(d.id, "fulfilled")}>Mark fulfilled</Button>}
+                    {d.status !== "cancelled" && <Button size="sm" variant="ghost" onClick={() => setStatus(d.id, "cancelled")}>Cancel</Button>}
+                    <Button size="sm" variant="ghost" onClick={() => remove(d.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {items.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No pledges yet.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// -------- Mentorship --------
+const MentorshipTab = () => {
+  const [mentors, setMentors] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const load = async () => {
+    const [m, r] = await Promise.all([
+      supabase.from("mentor_profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("mentorship_requests").select("*").order("created_at", { ascending: false }),
+    ]);
+    setMentors(m.data ?? []); setRequests(r.data ?? []); setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
+  const accepted = requests.filter((r) => r.status === "accepted").length;
+  return (
+    <div className="space-y-4">
+      <div className="grid sm:grid-cols-3 gap-3">
+        <Stat label="Mentors" value={mentors.length} />
+        <Stat label="Requests" value={requests.length} />
+        <Stat label="Active matches" value={accepted} />
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button size="sm" variant="outline" onClick={() => downloadCsv(`mentors-${Date.now()}`, mentors as any)}><Download className="w-4 h-4" /> Mentors</Button>
+        <Button size="sm" variant="outline" onClick={() => downloadCsv(`mentorship-requests-${Date.now()}`, requests as any)}><Download className="w-4 h-4" /> Requests</Button>
+      </div>
+      <div>
+        <h3 className="font-semibold mb-2">Mentors</h3>
+        <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="text-left p-3">User</th><th className="text-left p-3">Topics</th><th className="text-left p-3">Capacity</th><th className="text-left p-3">Available</th></tr></thead>
+            <tbody>
+              {mentors.map((m) => (
+                <tr key={m.id} className="border-t border-border/60">
+                  <td className="p-3 text-xs"><code>{m.user_id.slice(0, 8)}…</code></td>
+                  <td className="p-3 text-muted-foreground">{(m.topics ?? []).join(", ") || "—"}</td>
+                  <td className="p-3">{m.capacity}</td>
+                  <td className="p-3">{m.available ? "Yes" : "No"}</td>
+                </tr>
+              ))}
+              {mentors.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No mentors yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// -------- Resources --------
+const ResourcesTab = () => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase.from("resources").select("*").order("created_at", { ascending: false });
+    setItems(data ?? []); setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const upload = async (file: File): Promise<string | null> => {
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("resources").upload(path, file, { upsert: false });
+    if (error) { toast.error(error.message); setUploading(false); return null; }
+    const { data: { publicUrl } } = supabase.storage.from("resources").getPublicUrl(path);
+    setUploading(false); return publicUrl;
+  };
+
+  const save = async () => {
+    if (!editing?.title) { toast.error("Title required"); return; }
+    const payload = { title: editing.title, description: editing.description, category: editing.category, file_url: editing.file_url, external_url: editing.external_url };
+    const { error } = editing.id
+      ? await supabase.from("resources").update(payload).eq("id", editing.id)
+      : await supabase.from("resources").insert({ ...payload, created_by: (await supabase.auth.getUser()).data.user?.id });
+    if (error) toast.error(error.message);
+    else { toast.success("Saved"); setEditing(null); load(); }
+  };
+  const remove = async (id: string) => { if (!confirm("Delete resource?")) return; await supabase.from("resources").delete().eq("id", id); load(); };
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
+  return (
+    <div className="space-y-4">
+      <Button onClick={() => setEditing({})}><Plus className="w-4 h-4" /> New resource</Button>
+      <div className="grid gap-3">
+        {items.map((r) => (
+          <div key={r.id} className="rounded-2xl bg-card border border-border/60 p-5 flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap"><span className="font-display font-semibold text-primary">{r.title}</span>{r.category && <span className="px-2 py-0.5 rounded-full text-[11px] bg-muted">{r.category}</span>}</div>
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>
+              <div className="text-xs text-muted-foreground mt-1 flex gap-3">{r.file_url && <a href={r.file_url} target="_blank" rel="noreferrer" className="underline">File</a>}{r.external_url && <a href={r.external_url} target="_blank" rel="noreferrer" className="underline">Link</a>}</div>
+            </div>
+            <div className="flex gap-1 flex-shrink-0">
+              <Button size="sm" variant="ghost" onClick={() => setEditing(r)}><Pencil className="w-4 h-4" /></Button>
+              <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && <p className="text-center text-muted-foreground py-8">No resources yet.</p>}
+      </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing?.id ? "Edit resource" : "New resource"}</DialogTitle></DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div><Label>Title</Label><Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></div>
+              <div><Label>Category</Label><Input value={editing.category ?? ""} onChange={(e) => setEditing({ ...editing, category: e.target.value })} placeholder="Career, Academic, Forms..." /></div>
+              <div><Label>Description</Label><Textarea rows={3} maxLength={1000} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
+              <div>
+                <Label>Upload file (optional)</Label>
+                <Input type="file" disabled={uploading} onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const url = await upload(f); if (url) setEditing({ ...editing, file_url: url }); } }} />
+                {editing.file_url && <a href={editing.file_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline mt-1 inline-block">View uploaded file</a>}
+              </div>
+              <div><Label>External URL (optional)</Label><Input value={editing.external_url ?? ""} onChange={(e) => setEditing({ ...editing, external_url: e.target.value })} placeholder="https://..." /></div>
+            </div>
+          )}
+          <DialogFooter><Button onClick={save} disabled={uploading}>{uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+const Stat = ({ label, value }: { label: string; value: number | string }) => (
+  <div className="rounded-2xl bg-card border border-border/60 p-5">
+    <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+    <div className="font-display text-3xl font-semibold text-primary mt-1">{value}</div>
+  </div>
+);
+
 export default AdminPage;
