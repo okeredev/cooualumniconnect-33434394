@@ -6,19 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 import { COOU_DEPARTMENTS, COOU_FACULTIES, GRAD_YEARS, NIGERIAN_SCHOOLS } from "@/data/coou";
-import { Pencil, Check, Upload, Trash2, Plus, Loader2, BadgeCheck } from "lucide-react";
+import { COUNTRIES, COUNTRY_STATES } from "@/data/locations";
+import { Pencil, Check, Upload, Trash2, Plus, Loader2, BadgeCheck, FileText, Cake, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
-
-const NIGERIAN_STATES = [
-  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
-  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe", "Imo",
-  "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa",
-  "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba",
-  "Yobe", "Zamfara",
-];
 
 type Profile = {
   id?: string;
@@ -30,6 +23,7 @@ type Profile = {
   phone: string | null;
   whatsapp: string | null;
   address: string | null;
+  current_address: string | null;
   city: string | null;
   state: string | null;
   country: string | null;
@@ -39,6 +33,8 @@ type Profile = {
   website: string | null;
   graduation_year: number | null;
   department: string | null;
+  date_of_birth: string | null;
+  certificate_url: string | null;
   verified: boolean;
   hide_phone: boolean;
 };
