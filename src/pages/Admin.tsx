@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BadgeCheck, Ban, Shield, ShieldOff, Trash2, Plus, Pencil, Users, Briefcase, Calendar, Flag, BarChart3, Loader2, Download, Check, X as XIcon, Clock, Heart, GraduationCap, BookOpen, Upload, KeyRound, Eye } from "lucide-react";
+import { BadgeCheck, Ban, Shield, ShieldOff, Trash2, Plus, Pencil, Users, Briefcase, Calendar, Flag, BarChart3, Loader2, Download, Check, X as XIcon, Clock, Heart, GraduationCap, BookOpen, Upload, KeyRound, Eye, Cake, FileText, ExternalLink } from "lucide-react";
 import { downloadCsv } from "@/lib/csv";
 
 type Role = "admin" | "moderator" | "user";
@@ -242,8 +242,9 @@ const ModerationTab = () => {
 // -------- Users (advanced: bulk select, password reset, delete, drill-down) --------
 type FullProfile = ProfileRow & {
   bio: string | null; phone: string | null; whatsapp: string | null; city: string | null; state: string | null;
-  country: string | null; address: string | null; linkedin: string | null; github: string | null; twitter: string | null;
-  website: string | null; hide_phone: boolean; last_seen_at: string | null;
+  country: string | null; address: string | null; current_address: string | null; linkedin: string | null;
+  github: string | null; twitter: string | null; website: string | null; hide_phone: boolean;
+  last_seen_at: string | null; date_of_birth: string | null; certificate_url: string | null;
 };
 
 const UsersTab = () => {
