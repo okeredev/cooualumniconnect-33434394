@@ -37,7 +37,7 @@ const ChatPage = () => {
     const [ch, mb, pr] = await Promise.all([
       supabase.from("chat_channels").select("*").order("name"),
       supabase.from("chat_channel_members").select("channel_id").eq("user_id", user.id),
-      supabase.from("profiles").select("user_id, display_name, avatar_url").neq("user_id", user.id).limit(100),
+      supabase.from("profiles").select("user_id, display_name, avatar_url, last_seen_at").neq("user_id", user.id).limit(100),
     ]);
     setChannels((ch.data ?? []) as Channel[]);
     setMembers(new Set(((mb.data ?? []) as any[]).map((m) => m.channel_id)));
