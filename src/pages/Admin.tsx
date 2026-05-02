@@ -93,6 +93,7 @@ const AdminPage = () => {
 const AnalyticsTab = () => {
   const [stats, setStats] = useState({ users: 0, verified: 0, suspended: 0, jobs: 0, pendingJobs: 0, events: 0, reports: 0, applications: 0 });
   const [signupsByDay, setSignupsByDay] = useState<{ day: string; n: number }[]>([]);
+  const [birthdays, setBirthdays] = useState<{ user_id: string; display_name: string | null; avatar_url: string | null; date_of_birth: string; daysUntil: number; turning: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
@@ -120,6 +121,29 @@ const AnalyticsTab = () => {
       days.push({ day: d, n: buckets[d] ?? 0 });
     }
     setSignupsByDay(days);
+
+    // Upcoming birthdays in the next 60 days
+    const { data: dobRows } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, avatar_url, date_of_birth")
+      .not("date_of_birth", "is", null)
+      .eq("suspended", false);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const upcoming = (dobRows ?? [])
+      .map((r: any) => {
+        const dob = new Date(r.date_of_birth);
+        const next = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+        if (next < today) next.setFullYear(today.getFullYear() + 1);
+        const daysUntil = Math.round((next.getTime() - today.getTime()) / 86400000);
+        const turning = next.getFullYear() - dob.getFullYear();
+        return { ...r, daysUntil, turning };
+      })
+      .filter((r: any) => r.daysUntil <= 60)
+      .sort((a: any, b: any) => a.daysUntil - b.daysUntil)
+      .slice(0, 25);
+    setBirthdays(upcoming);
+
     setLoading(false);
   };
   useEffect(() => { refresh(); }, []);
