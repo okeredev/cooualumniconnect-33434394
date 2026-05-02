@@ -2,6 +2,7 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, Briefcase, Bell, Search, Shield, LogOut, Heart, GraduationCap, MessageCircle, Calendar, BookOpen } from "lucide-react";
 import coouLogo from "@/assets/coou-logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import { usePresence } from "@/hooks/usePresence";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
