@@ -360,14 +360,24 @@ const DashboardPage = () => {
           <TabsContent value="education" className="mt-6 space-y-3">
             <Button variant="outline" onClick={addEducation}><Plus className="w-4 h-4" /> Add education</Button>
             {education.map((e) => (
-              <div key={e.id} className="rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-2 gap-3">
-                <Input value={e.school} onChange={(ev) => updateEducation(e.id, { school: ev.target.value })} placeholder="School" />
-                <Input value={e.degree ?? ""} onChange={(ev) => updateEducation(e.id, { degree: ev.target.value })} placeholder="Degree (e.g. B.Sc.)" />
-                <Input value={e.field ?? ""} onChange={(ev) => updateEducation(e.id, { field: ev.target.value })} placeholder="Field of study" />
-                <div className="flex gap-2">
-                  <Input type="number" value={e.start_year ?? ""} onChange={(ev) => updateEducation(e.id, { start_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="Start" />
-                  <Input type="number" value={e.end_year ?? ""} onChange={(ev) => updateEducation(e.id, { end_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="End" />
-                  <Button variant="ghost" size="icon" onClick={() => deleteEducation(e.id)} aria-label="Delete"><Trash2 className="w-4 h-4 text-destructive" /></Button>
+              <div key={e.id} className="rounded-2xl bg-card border border-border/60 p-5 space-y-3">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <Input value={e.school} onChange={(ev) => patchEducation(e.id, { school: ev.target.value })} placeholder="School *" />
+                  <Input value={e.degree ?? ""} onChange={(ev) => patchEducation(e.id, { degree: ev.target.value })} placeholder="Degree (e.g. B.Sc.)" />
+                  <Input value={e.field ?? ""} onChange={(ev) => patchEducation(e.id, { field: ev.target.value })} placeholder="Field of study" />
+                  <div className="flex gap-2">
+                    <Input type="number" value={e.start_year ?? ""} onChange={(ev) => patchEducation(e.id, { start_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="Start year" />
+                    <Input type="number" value={e.end_year ?? ""} onChange={(ev) => patchEducation(e.id, { end_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="End year" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
+                  <div className="text-xs text-muted-foreground">
+                    {e._isNew ? "New entry — not yet saved" : e._dirty ? "Unsaved changes" : "Saved"}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => deleteEducation(e.id)}><Trash2 className="w-4 h-4 text-destructive" /> {e._isNew ? "Cancel" : "Delete"}</Button>
+                    <Button size="sm" variant="hero" onClick={() => saveEducation(e.id)} disabled={!e._dirty}><Check className="w-4 h-4" /> Save</Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -379,19 +389,27 @@ const DashboardPage = () => {
             {employment.map((w) => (
               <div key={w.id} className="rounded-2xl bg-card border border-border/60 p-5 space-y-3">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <Input value={w.company} onChange={(ev) => updateEmployment(w.id, { company: ev.target.value })} placeholder="Company" />
-                  <Input value={w.title ?? ""} onChange={(ev) => updateEmployment(w.id, { title: ev.target.value })} placeholder="Title" />
-                  <Input type="date" value={w.start_date ?? ""} onChange={(ev) => updateEmployment(w.id, { start_date: ev.target.value })} />
+                  <Input value={w.company} onChange={(ev) => patchEmployment(w.id, { company: ev.target.value })} placeholder="Company *" />
+                  <Input value={w.title ?? ""} onChange={(ev) => patchEmployment(w.id, { title: ev.target.value })} placeholder="Title" />
+                  <Input type="date" value={w.start_date ?? ""} onChange={(ev) => patchEmployment(w.id, { start_date: ev.target.value })} />
                   <div className="flex gap-2 items-center">
-                    <Input type="date" value={w.end_date ?? ""} onChange={(ev) => updateEmployment(w.id, { end_date: ev.target.value })} disabled={w.current} />
+                    <Input type="date" value={w.end_date ?? ""} onChange={(ev) => patchEmployment(w.id, { end_date: ev.target.value })} disabled={w.current} />
                     <label className="flex items-center gap-1.5 text-sm whitespace-nowrap">
-                      <input type="checkbox" checked={w.current} onChange={(ev) => updateEmployment(w.id, { current: ev.target.checked, end_date: ev.target.checked ? null : w.end_date })} />
+                      <input type="checkbox" checked={w.current} onChange={(ev) => patchEmployment(w.id, { current: ev.target.checked, end_date: ev.target.checked ? null : w.end_date })} />
                       Current
                     </label>
                   </div>
                 </div>
-                <Textarea rows={2} value={w.description ?? ""} onChange={(ev) => updateEmployment(w.id, { description: ev.target.value })} placeholder="What did you do?" maxLength={500} />
-                <Button variant="ghost" size="sm" onClick={() => deleteEmployment(w.id)}><Trash2 className="w-4 h-4 text-destructive" /> Remove</Button>
+                <Textarea rows={2} value={w.description ?? ""} onChange={(ev) => patchEmployment(w.id, { description: ev.target.value })} placeholder="What did you do?" maxLength={500} />
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
+                  <div className="text-xs text-muted-foreground">
+                    {w._isNew ? "New entry — not yet saved" : w._dirty ? "Unsaved changes" : "Saved"}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => deleteEmployment(w.id)}><Trash2 className="w-4 h-4 text-destructive" /> {w._isNew ? "Cancel" : "Delete"}</Button>
+                    <Button size="sm" variant="hero" onClick={() => saveEmployment(w.id)} disabled={!w._dirty}><Check className="w-4 h-4" /> Save</Button>
+                  </div>
+                </div>
               </div>
             ))}
             {employment.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No experience added yet.</p>}
