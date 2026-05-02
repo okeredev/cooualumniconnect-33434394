@@ -6,19 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 import { COOU_DEPARTMENTS, COOU_FACULTIES, GRAD_YEARS, NIGERIAN_SCHOOLS } from "@/data/coou";
-import { Pencil, Check, Upload, Trash2, Plus, Loader2, BadgeCheck } from "lucide-react";
+import { COUNTRIES, COUNTRY_STATES } from "@/data/locations";
+import { Pencil, Check, Upload, Trash2, Plus, Loader2, BadgeCheck, FileText, Cake, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
-
-const NIGERIAN_STATES = [
-  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
-  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe", "Imo",
-  "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa",
-  "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba",
-  "Yobe", "Zamfara",
-];
 
 type Profile = {
   id?: string;
@@ -30,6 +23,7 @@ type Profile = {
   phone: string | null;
   whatsapp: string | null;
   address: string | null;
+  current_address: string | null;
   city: string | null;
   state: string | null;
   country: string | null;
@@ -39,6 +33,8 @@ type Profile = {
   website: string | null;
   graduation_year: number | null;
   department: string | null;
+  date_of_birth: string | null;
+  certificate_url: string | null;
   verified: boolean;
   hide_phone: boolean;
 };
@@ -68,7 +64,9 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingCert, setUploadingCert] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const certRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     document.title = "Dashboard — COOU Alumni Connect";
@@ -106,6 +104,7 @@ const DashboardPage = () => {
       phone: profile.phone,
       whatsapp: profile.whatsapp,
       address: profile.address,
+      current_address: profile.current_address,
       city: profile.city,
       state: profile.state,
       country: profile.country || "Nigeria",
@@ -115,11 +114,31 @@ const DashboardPage = () => {
       website: profile.website,
       graduation_year: profile.graduation_year,
       department: profile.department,
+      date_of_birth: profile.date_of_birth,
       hide_phone: profile.hide_phone,
     }).eq("user_id", user.id);
     setSaving(false);
     if (error) toast.error(error.message);
     else toast.success("Profile saved");
+  };
+
+  const uploadCertificate = async (file: File) => {
+    if (!user) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
+    const allowed = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
+    if (!allowed.includes(file.type)) { toast.error("PDF, PNG, or JPG only"); return; }
+    setUploadingCert(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/certificate-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("certificates").upload(path, file, { upsert: true });
+    if (upErr) { toast.error(upErr.message); setUploadingCert(false); return; }
+    // Private bucket — use a long-lived signed URL stored on profile (10 years)
+    const { data: signed } = await supabase.storage.from("certificates").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    const url = signed?.signedUrl ?? path;
+    const { error: updErr } = await supabase.from("profiles").update({ certificate_url: url }).eq("user_id", user.id);
+    setUploadingCert(false);
+    if (updErr) toast.error(updErr.message);
+    else { updateProfile({ certificate_url: url }); toast.success("Certificate uploaded"); }
   };
 
   const uploadAvatar = async (file: File) => {
@@ -323,7 +342,15 @@ const DashboardPage = () => {
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Display name"><Input value={profile.display_name ?? ""} onChange={(e) => updateProfile({ display_name: e.target.value })} maxLength={80} /></Field>
-              <Field label="Phone (Nigerian)"><Input value={profile.phone ?? ""} onChange={(e) => updateProfile({ phone: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
+              <Field label="Date of birth">
+                <Input
+                  type="date"
+                  value={profile.date_of_birth ?? ""}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => updateProfile({ date_of_birth: e.target.value || null })}
+                />
+              </Field>
+              <Field label="Phone"><Input value={profile.phone ?? ""} onChange={(e) => updateProfile({ phone: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
               <Field label="WhatsApp"><Input value={profile.whatsapp ?? ""} onChange={(e) => updateProfile({ whatsapp: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
               <Field label="Graduation year">
                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.graduation_year ?? ""} onChange={(e) => updateProfile({ graduation_year: e.target.value ? Number(e.target.value) : null })}>
@@ -337,18 +364,60 @@ const DashboardPage = () => {
                   {COOU_DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </Field>
-              <Field label="State">
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.state ?? ""} onChange={(e) => updateProfile({ state: e.target.value })}>
-                  <option value="">Select state</option>
-                  {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+              <Field label="Country">
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={profile.country ?? "Nigeria"}
+                  onChange={(e) => updateProfile({ country: e.target.value, state: null })}
+                >
+                  {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>
+              <Field label="State / Region">
+                {(() => {
+                  const states = COUNTRY_STATES[profile.country ?? "Nigeria"] ?? [];
+                  if (states.length === 0) {
+                    return <Input value={profile.state ?? ""} onChange={(e) => updateProfile({ state: e.target.value })} maxLength={80} placeholder="Enter state / region" />;
+                  }
+                  return (
+                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.state ?? ""} onChange={(e) => updateProfile({ state: e.target.value })}>
+                      <option value="">Select state</option>
+                      {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  );
+                })()}
+              </Field>
               <Field label="City"><Input value={profile.city ?? ""} onChange={(e) => updateProfile({ city: e.target.value })} maxLength={80} /></Field>
-              <Field label="Address"><Input value={profile.address ?? ""} onChange={(e) => updateProfile({ address: e.target.value })} maxLength={200} /></Field>
+              <Field label="Permanent address"><Input value={profile.address ?? ""} onChange={(e) => updateProfile({ address: e.target.value })} maxLength={200} placeholder="Hometown / family address" /></Field>
+              <Field label="Current address"><Input value={profile.current_address ?? ""} onChange={(e) => updateProfile({ current_address: e.target.value })} maxLength={200} placeholder="Where you currently live" /></Field>
             </div>
             <Field label="Bio">
               <Textarea rows={3} value={profile.bio ?? ""} onChange={(e) => updateProfile({ bio: e.target.value })} maxLength={500} placeholder="Tell the network about yourself..." />
             </Field>
+
+            {/* Certificate upload */}
+            <div className="rounded-xl border border-border/60 p-4 bg-muted/30 space-y-3">
+              <div className="flex items-start gap-3">
+                <FileText className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-sm">COOU Certificate / Statement of Result</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Upload a clear scan or photo of your degree certificate or statement of result. PDF, JPG or PNG · max 10MB. Visible only to you and admins (used for verification).</div>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => certRef.current?.click()} disabled={uploadingCert}>
+                  {uploadingCert ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {profile.certificate_url ? "Replace certificate" : "Upload certificate"}
+                </Button>
+                {profile.certificate_url && (
+                  <a href={profile.certificate_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+                    <ExternalLink className="w-3.5 h-3.5" /> View uploaded file
+                  </a>
+                )}
+                <input ref={certRef} type="file" accept="application/pdf,image/png,image/jpeg" hidden onChange={(e) => e.target.files?.[0] && uploadCertificate(e.target.files[0])} />
+              </div>
+            </div>
+
             <div className="rounded-xl border border-border/60 p-4 flex items-start justify-between gap-3 bg-muted/30">
               <div>
                 <div className="font-medium text-sm">Hide my phone number from the directory</div>

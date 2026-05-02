@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence, formatLastSeen } from "@/hooks/usePresence";
-import { Hash, Loader2, MessageCircle, Send, Users } from "lucide-react";
+import { ArrowLeft, Hash, Loader2, MessageCircle, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 
 type Channel = { id: string; name: string; description: string | null };
@@ -25,42 +25,59 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [tab, setTab] = useState<"channels" | "dms">("channels");
   const [search, setSearch] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { document.title = "Chat — COOU Alumni Connect"; init(); }, [user]);
+  useEffect(() => { document.title = "Chat — COOU Alumni Connect"; }, []);
 
-  const init = async () => {
+  // Load directory & channels once we have a user. Re-runs if user changes.
+  useEffect(() => {
     if (!user) return;
-    setLoading(true);
-    const [ch, mb, pr] = await Promise.all([
-      supabase.from("chat_channels").select("*").order("name"),
-      supabase.from("chat_channel_members").select("channel_id").eq("user_id", user.id),
-      supabase.from("profiles").select("user_id, display_name, avatar_url, last_seen_at").neq("user_id", user.id).limit(100),
-    ]);
-    setChannels((ch.data ?? []) as Channel[]);
-    setMembers(new Set(((mb.data ?? []) as any[]).map((m) => m.channel_id)));
-    const ps = (pr.data ?? []) as ProfileMini[];
-    setPeople(ps);
-    const map: Record<string, ProfileMini> = {};
-    ps.forEach((p) => { map[p.user_id] = p; });
-    setProfilesById(map);
-    setLoading(false);
-  };
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [ch, mb, pr] = await Promise.all([
+          supabase.from("chat_channels").select("*").order("name"),
+          supabase.from("chat_channel_members").select("channel_id").eq("user_id", user.id),
+          supabase.from("profiles").select("user_id, display_name, avatar_url, last_seen_at").neq("user_id", user.id).limit(200),
+        ]);
+        if (cancelled) return;
+        setChannels((ch.data ?? []) as Channel[]);
+        setMembers(new Set(((mb.data ?? []) as any[]).map((m) => m.channel_id)));
+        const ps = (pr.data ?? []) as ProfileMini[];
+        setPeople(ps);
+        const map: Record<string, ProfileMini> = {};
+        ps.forEach((p) => { map[p.user_id] = p; });
+        setProfilesById(map);
+      } catch (e: any) {
+        if (!cancelled) toast.error(e?.message || "Failed to load chat");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   useEffect(() => {
     if (!active || !user) return;
     let cancelled = false;
+    setLoadingMessages(true);
+    setMessages([]);
     (async () => {
       const q = supabase.from("chat_messages").select("*").order("created_at", { ascending: true }).limit(200);
-      const { data } = active.kind === "channel"
+      const { data, error } = active.kind === "channel"
         ? await q.eq("channel_id", active.id)
         : await q.is("channel_id", null).or(`and(sender_id.eq.${user.id},recipient_id.eq.${active.id}),and(sender_id.eq.${active.id},recipient_id.eq.${user.id})`);
-      if (!cancelled) setMessages((data ?? []) as Message[]);
+      if (cancelled) return;
+      if (error) toast.error(error.message);
+      setMessages((data ?? []) as Message[]);
+      setLoadingMessages(false);
     })();
 
-    const channel = supabase.channel(`chat-${active.kind}-${active.id}`)
+    const channel = supabase.channel(`chat-${active.kind}-${active.id}-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
         const m = payload.new as Message;
         const isMatch = active.kind === "channel"
@@ -72,7 +89,9 @@ const ChatPage = () => {
     return () => { cancelled = true; supabase.removeChannel(channel); };
   }, [active, user]);
 
-  useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
 
   const join = async (c: Channel) => {
     if (!user) return;
@@ -86,21 +105,41 @@ const ChatPage = () => {
 
   const send = async () => {
     if (!user || !active || !text.trim()) return;
-    const payload: any = { sender_id: user.id, content: text.trim().slice(0, 2000) };
+    const content = text.trim().slice(0, 2000);
+    const payload: any = { sender_id: user.id, content };
     if (active.kind === "channel") payload.channel_id = active.id; else payload.recipient_id = active.id;
     setText("");
-    const { error } = await supabase.from("chat_messages").insert(payload);
-    if (error) toast.error(error.message);
+    // Optimistic insert so it shows instantly even if realtime is slow
+    const optimistic: Message = {
+      id: `tmp-${Date.now()}`, sender_id: user.id,
+      channel_id: active.kind === "channel" ? active.id : null,
+      recipient_id: active.kind === "dm" ? active.id : null,
+      content, created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    const { data, error } = await supabase.from("chat_messages").insert(payload).select().single();
+    if (error) {
+      toast.error(error.message);
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      setText(content);
+    } else if (data) {
+      // Replace optimistic with real (in case realtime didn't fire)
+      setMessages((prev) => {
+        const without = prev.filter((m) => m.id !== optimistic.id);
+        if (without.some((m) => m.id === (data as any).id)) return without;
+        return [...without, data as Message];
+      });
+    }
   };
 
   const filteredPeople = people.filter((p) => !search || (p.display_name || "").toLowerCase().includes(search.toLowerCase()));
 
   return (
     <AppShell>
-      <section className="container py-6">
-        <div className="grid md:grid-cols-[280px_1fr] gap-4 h-[calc(100vh-180px)] min-h-[500px]">
-          {/* Sidebar */}
-          <aside className="rounded-2xl bg-card border border-border/60 flex flex-col overflow-hidden">
+      <section className="container py-4 md:py-6">
+        <div className="grid md:grid-cols-[280px_1fr] gap-4 h-[calc(100vh-150px)] md:h-[calc(100vh-180px)] min-h-[500px]">
+          {/* Sidebar — hidden on mobile when a conversation is active */}
+          <aside className={`rounded-2xl bg-card border border-border/60 flex flex-col overflow-hidden ${active ? "hidden md:flex" : "flex"}`}>
             <div className="flex border-b border-border/60">
               <button onClick={() => setTab("channels")} className={`flex-1 py-2.5 text-sm font-medium ${tab === "channels" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}><Hash className="w-4 h-4 inline mr-1" />Channels</button>
               <button onClick={() => setTab("dms")} className={`flex-1 py-2.5 text-sm font-medium ${tab === "dms" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}><Users className="w-4 h-4 inline mr-1" />Direct</button>
@@ -135,46 +174,56 @@ const ChatPage = () => {
                       </button>
                     );
                   })}
+                  {filteredPeople.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No alumni found.</p>}
                 </div>
               </div>
             )}
           </aside>
 
-          {/* Conversation */}
-          <div className="rounded-2xl bg-card border border-border/60 flex flex-col overflow-hidden">
+          {/* Conversation — full screen on mobile when active */}
+          <div className={`rounded-2xl bg-card border border-border/60 flex-col overflow-hidden ${active ? "flex" : "hidden md:flex"}`}>
             {active ? (
               <>
-                <div className="px-5 py-3 border-b border-border/60 font-semibold flex items-center gap-2">
-                  <span>{active.label}</span>
+                <div className="px-4 md:px-5 py-3 border-b border-border/60 font-semibold flex items-center gap-2">
+                  <button onClick={() => setActive(null)} className="md:hidden p-1 -ml-1 rounded hover:bg-muted" aria-label="Back to list">
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <span className="truncate flex-1">{active.label}</span>
                   {active.kind === "dm" && (() => {
                     const peer = profilesById[active.id];
                     const isOnline = online.has(active.id);
                     return (
-                      <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
+                      <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground flex-shrink-0">
                         <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500" : "bg-red-400"}`} />
-                        {isOnline ? "Online" : formatLastSeen(peer?.last_seen_at)}
+                        <span className="hidden sm:inline">{isOnline ? "Online" : formatLastSeen(peer?.last_seen_at)}</span>
                       </span>
                     );
                   })()}
                 </div>
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-2">
-                  {messages.map((m) => {
-                    const mine = m.sender_id === user?.id;
-                    const sender = profilesById[m.sender_id];
-                    return (
-                      <div key={m.id} className={`flex gap-2 ${mine ? "justify-end" : ""}`}>
-                        {!mine && (sender?.avatar_url ? <img src={sender.avatar_url} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" /> : <div className="w-7 h-7 rounded-full bg-muted grid place-items-center text-[10px] flex-shrink-0">{(sender?.display_name || "A")[0]}</div>)}
-                        <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                          {!mine && <div className="text-[11px] font-semibold opacity-70 mb-0.5">{sender?.display_name || "Alumnus"}</div>}
-                          <div className="whitespace-pre-wrap break-words">{m.content}</div>
-                          <div className="text-[10px] opacity-60 mt-1">{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {messages.length === 0 && <p className="text-center text-muted-foreground text-sm py-10">No messages yet — say hello.</p>}
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2">
+                  {loadingMessages ? (
+                    <div className="text-center py-10"><Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" /></div>
+                  ) : (
+                    <>
+                      {messages.map((m) => {
+                        const mine = m.sender_id === user?.id;
+                        const sender = profilesById[m.sender_id];
+                        return (
+                          <div key={m.id} className={`flex gap-2 ${mine ? "justify-end" : ""}`}>
+                            {!mine && (sender?.avatar_url ? <img src={sender.avatar_url} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" /> : <div className="w-7 h-7 rounded-full bg-muted grid place-items-center text-[10px] flex-shrink-0">{(sender?.display_name || "A")[0]}</div>)}
+                            <div className={`max-w-[78%] md:max-w-[75%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                              {!mine && <div className="text-[11px] font-semibold opacity-70 mb-0.5">{sender?.display_name || "Alumnus"}</div>}
+                              <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                              <div className="text-[10px] opacity-60 mt-1">{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {messages.length === 0 && <p className="text-center text-muted-foreground text-sm py-10">No messages yet — say hello.</p>}
+                    </>
+                  )}
                 </div>
-                <div className="border-t border-border/60 p-3 flex gap-2">
+                <div className="border-t border-border/60 p-2 md:p-3 flex gap-2">
                   <Input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Write a message..." aria-label="Message" />
                   <Button onClick={send} disabled={!text.trim()} aria-label="Send"><Send className="w-4 h-4" /></Button>
                 </div>

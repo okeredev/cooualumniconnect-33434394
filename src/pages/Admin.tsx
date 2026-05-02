@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BadgeCheck, Ban, Shield, ShieldOff, Trash2, Plus, Pencil, Users, Briefcase, Calendar, Flag, BarChart3, Loader2, Download, Check, X as XIcon, Clock, Heart, GraduationCap, BookOpen, Upload, KeyRound, Eye } from "lucide-react";
+import { BadgeCheck, Ban, Shield, ShieldOff, Trash2, Plus, Pencil, Users, Briefcase, Calendar, Flag, BarChart3, Loader2, Download, Check, X as XIcon, Clock, Heart, GraduationCap, BookOpen, Upload, KeyRound, Eye, Cake, FileText, ExternalLink } from "lucide-react";
 import { downloadCsv } from "@/lib/csv";
 
 type Role = "admin" | "moderator" | "user";
@@ -93,6 +93,7 @@ const AdminPage = () => {
 const AnalyticsTab = () => {
   const [stats, setStats] = useState({ users: 0, verified: 0, suspended: 0, jobs: 0, pendingJobs: 0, events: 0, reports: 0, applications: 0 });
   const [signupsByDay, setSignupsByDay] = useState<{ day: string; n: number }[]>([]);
+  const [birthdays, setBirthdays] = useState<{ user_id: string; display_name: string | null; avatar_url: string | null; date_of_birth: string; daysUntil: number; turning: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
@@ -120,6 +121,29 @@ const AnalyticsTab = () => {
       days.push({ day: d, n: buckets[d] ?? 0 });
     }
     setSignupsByDay(days);
+
+    // Upcoming birthdays in the next 60 days
+    const { data: dobRows } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, avatar_url, date_of_birth")
+      .not("date_of_birth", "is", null)
+      .eq("suspended", false);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const upcoming = (dobRows ?? [])
+      .map((r: any) => {
+        const dob = new Date(r.date_of_birth);
+        const next = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+        if (next < today) next.setFullYear(today.getFullYear() + 1);
+        const daysUntil = Math.round((next.getTime() - today.getTime()) / 86400000);
+        const turning = next.getFullYear() - dob.getFullYear();
+        return { ...r, daysUntil, turning };
+      })
+      .filter((r: any) => r.daysUntil <= 60)
+      .sort((a: any, b: any) => a.daysUntil - b.daysUntil)
+      .slice(0, 25);
+    setBirthdays(upcoming);
+
     setLoading(false);
   };
   useEffect(() => { refresh(); }, []);
@@ -173,6 +197,46 @@ const AnalyticsTab = () => {
           <span>{signupsByDay[0]?.day}</span>
           <span>{signupsByDay[signupsByDay.length - 1]?.day}</span>
         </div>
+      </div>
+
+      {/* Upcoming birthdays */}
+      <div className="rounded-2xl bg-card border border-border/60 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><Cake className="w-3.5 h-3.5" /> Upcoming birthdays</div>
+            <div className="font-display text-xl font-semibold text-primary">{birthdays.length} alumni in the next 60 days</div>
+          </div>
+        </div>
+        {birthdays.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">No birthdays in the next 60 days, or no alumni have added their date of birth yet.</p>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+            {birthdays.map((b) => {
+              const dob = new Date(b.date_of_birth);
+              const monthDay = dob.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+              const isToday = b.daysUntil === 0;
+              const isSoon = b.daysUntil <= 7;
+              return (
+                <div key={b.user_id} className={`rounded-xl border p-3 flex items-center gap-3 ${isToday ? "bg-gold/10 border-gold/40" : isSoon ? "bg-primary/5 border-primary/20" : "border-border/60"}`}>
+                  {b.avatar_url ? (
+                    <img src={b.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-muted grid place-items-center text-sm flex-shrink-0">{(b.display_name || "?")[0]}</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm truncate">{b.display_name || "Alumnus"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {monthDay} · turning {b.turning}
+                    </div>
+                  </div>
+                  <div className={`text-xs font-semibold flex-shrink-0 ${isToday ? "text-gold" : isSoon ? "text-primary" : "text-muted-foreground"}`}>
+                    {isToday ? "Today!" : `${b.daysUntil}d`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -242,8 +306,9 @@ const ModerationTab = () => {
 // -------- Users (advanced: bulk select, password reset, delete, drill-down) --------
 type FullProfile = ProfileRow & {
   bio: string | null; phone: string | null; whatsapp: string | null; city: string | null; state: string | null;
-  country: string | null; address: string | null; linkedin: string | null; github: string | null; twitter: string | null;
-  website: string | null; hide_phone: boolean; last_seen_at: string | null;
+  country: string | null; address: string | null; current_address: string | null; linkedin: string | null;
+  github: string | null; twitter: string | null; website: string | null; hide_phone: boolean;
+  last_seen_at: string | null; date_of_birth: string | null; certificate_url: string | null;
 };
 
 const UsersTab = () => {
@@ -480,14 +545,27 @@ const UsersTab = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <DetailRow label="Department" value={detail.department} />
                   <DetailRow label="Graduation year" value={detail.graduation_year} />
+                  <DetailRow label="Date of birth" value={detail.date_of_birth ? new Date(detail.date_of_birth).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "—"} />
                   <DetailRow label="Phone" value={detail.phone || "—"} />
                   <DetailRow label="WhatsApp" value={detail.whatsapp || "—"} />
                   <DetailRow label="City" value={detail.city || "—"} />
                   <DetailRow label="State" value={detail.state || "—"} />
                   <DetailRow label="Country" value={detail.country || "—"} />
+                  <DetailRow label="Permanent address" value={detail.address || "—"} />
+                  <DetailRow label="Current address" value={detail.current_address || "—"} />
                   <DetailRow label="Hide phone" value={detail.hide_phone ? "Yes" : "No"} />
                   <DetailRow label="Last seen" value={detail.last_seen_at ? new Date(detail.last_seen_at).toLocaleString() : "Never"} />
                   <DetailRow label="Joined" value={new Date(detail.created_at).toLocaleString()} />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Certificate / Statement of Result</Label>
+                  {detail.certificate_url ? (
+                    <a href={detail.certificate_url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                      <ExternalLink className="w-3.5 h-3.5" /> View uploaded certificate
+                    </a>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">Not uploaded</p>
+                  )}
                 </div>
                 {detail.bio && (
                   <div>
