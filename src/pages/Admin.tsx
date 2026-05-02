@@ -198,6 +198,46 @@ const AnalyticsTab = () => {
           <span>{signupsByDay[signupsByDay.length - 1]?.day}</span>
         </div>
       </div>
+
+      {/* Upcoming birthdays */}
+      <div className="rounded-2xl bg-card border border-border/60 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><Cake className="w-3.5 h-3.5" /> Upcoming birthdays</div>
+            <div className="font-display text-xl font-semibold text-primary">{birthdays.length} alumni in the next 60 days</div>
+          </div>
+        </div>
+        {birthdays.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">No birthdays in the next 60 days, or no alumni have added their date of birth yet.</p>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+            {birthdays.map((b) => {
+              const dob = new Date(b.date_of_birth);
+              const monthDay = dob.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+              const isToday = b.daysUntil === 0;
+              const isSoon = b.daysUntil <= 7;
+              return (
+                <div key={b.user_id} className={`rounded-xl border p-3 flex items-center gap-3 ${isToday ? "bg-gold/10 border-gold/40" : isSoon ? "bg-primary/5 border-primary/20" : "border-border/60"}`}>
+                  {b.avatar_url ? (
+                    <img src={b.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-muted grid place-items-center text-sm flex-shrink-0">{(b.display_name || "?")[0]}</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm truncate">{b.display_name || "Alumnus"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {monthDay} · turning {b.turning}
+                    </div>
+                  </div>
+                  <div className={`text-xs font-semibold flex-shrink-0 ${isToday ? "text-gold" : isSoon ? "text-primary" : "text-muted-foreground"}`}>
+                    {isToday ? "Today!" : `${b.daysUntil}d`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
