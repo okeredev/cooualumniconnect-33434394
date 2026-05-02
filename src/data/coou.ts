@@ -1,35 +1,140 @@
-// Shared mock data sourced from COOU (Chukwuemeka Odumegwu Ojukwu University, Anambra State)
+// Shared data sourced from the official COOU website (coou.edu.ng)
+// Chukwuemeka Odumegwu Ojukwu University, Anambra State
 export const COOU_FACULTIES = [
   "Agriculture",
   "Arts",
+  "Basic Clinical Sciences",
   "Basic Medical Sciences",
   "Clinical Medicine",
+  "Dentistry",
   "Education",
   "Engineering",
   "Environmental Sciences",
+  "Health Sciences & Technology",
   "Law",
   "Management Sciences",
   "Natural Sciences",
+  "Nursing Sciences",
   "Pharmaceutical Sciences",
+  "Physical Sciences",
   "Social Sciences",
+  "Veterinary Medicine",
 ];
 
+// Comprehensive department list across all COOU faculties
 export const COOU_DEPARTMENTS = [
-  "Computer Science",
-  "Mass Communication",
-  "Business Administration",
-  "Accountancy",
-  "Economics",
-  "Political Science",
-  "Law",
-  "Medicine & Surgery",
-  "Pharmacy",
-  "Civil Engineering",
-  "Electrical Engineering",
-  "Architecture",
-  "Microbiology",
+  // Agriculture
+  "Agricultural Economics & Extension",
+  "Animal Science",
+  "Crop Science",
+  "Fisheries & Aquaculture",
+  "Food Science & Technology",
+  "Soil Science",
+  // Arts
+  "English Language & Literature",
+  "History & International Studies",
+  "Igbo, African & Asian Studies",
+  "Linguistics",
+  "Music",
+  "Philosophy",
+  "Religion & Human Relations",
+  "Theatre & Film Studies",
+  // Basic Clinical / Medical Sciences
+  "Anatomy",
+  "Physiology",
   "Biochemistry",
-  "English Language",
+  "Medical Biochemistry",
+  "Medical Laboratory Science",
+  "Pharmacology & Therapeutics",
+  // Clinical Medicine
+  "Medicine & Surgery",
+  "Community Medicine",
+  "Internal Medicine",
+  "Obstetrics & Gynaecology",
+  "Paediatrics",
+  "Pathology",
+  "Radiology",
+  "Surgery",
+  // Dentistry
+  "Dental Surgery",
+  "Oral Pathology",
+  "Restorative Dentistry",
+  // Education
+  "Adult & Continuing Education",
+  "Educational Management & Policy",
+  "Educational Foundations",
+  "Guidance & Counselling",
+  "Human Kinetics & Health Education",
+  "Library & Information Science",
+  "Science Education",
+  "Vocational & Technical Education",
+  // Engineering
+  "Agricultural & Bioresources Engineering",
+  "Chemical Engineering",
+  "Civil Engineering",
+  "Computer Engineering",
+  "Electrical Engineering",
+  "Electronics & Computer Engineering",
+  "Mechanical Engineering",
+  "Mechatronics Engineering",
+  "Petroleum & Gas Engineering",
+  // Environmental Sciences
+  "Architecture",
+  "Building",
+  "Estate Management",
+  "Environmental Management",
+  "Geography & Meteorology",
+  "Quantity Surveying",
+  "Surveying & Geoinformatics",
+  "Urban & Regional Planning",
+  // Health Sciences
+  "Environmental Health Science",
+  "Public Health",
+  "Optometry",
+  // Law
+  "Commercial & Property Law",
+  "International Law & Jurisprudence",
+  "Public & Private Law",
+  // Management Sciences
+  "Accountancy",
+  "Banking & Finance",
+  "Business Administration",
+  "Cooperative Economics & Management",
+  "Entrepreneurial Studies",
+  "Marketing",
+  "Public Administration",
+  // Natural / Physical Sciences
+  "Biology",
+  "Botany",
+  "Chemistry",
+  "Computer Science",
+  "Geology",
+  "Industrial Chemistry",
+  "Industrial Physics",
+  "Mathematics",
+  "Microbiology",
+  "Parasitology & Entomology",
+  "Physics",
+  "Statistics",
+  "Zoology",
+  // Nursing
+  "Nursing Science",
+  // Pharmaceutical Sciences
+  "Clinical Pharmacy",
+  "Pharmaceutical Chemistry",
+  "Pharmaceutical Microbiology",
+  "Pharmaceutics & Pharmaceutical Technology",
+  "Pharmacognosy",
+  "Pharmacy",
+  // Social Sciences
+  "Economics",
+  "Mass Communication",
+  "Political Science",
+  "Psychology",
+  "Sociology / Anthropology",
+  "Social Work",
+  // Veterinary
+  "Veterinary Medicine",
 ];
 
 export const LOCATIONS = [
@@ -38,7 +143,7 @@ export const LOCATIONS = [
   "Ibadan, Nigeria", "Kano, Nigeria", "Benin City, Nigeria", "Owerri, Nigeria", "Asaba, Nigeria",
 ];
 
-export const GRAD_YEARS = Array.from({ length: 20 }, (_, i) => 2024 - i);
+export const GRAD_YEARS = Array.from({ length: 25 }, (_, i) => 2026 - i);
 
 export type Alumni = {
   id: string;
@@ -71,7 +176,7 @@ export const ALUMNI: Alumni[] = [
   { id: "a3", name: "Emeka Nwosu", initials: "EN", year: 2012, faculty: "Clinical Medicine", department: "Medicine & Surgery", location: "Awka, Anambra", role: "Consultant Physician", company: "COOU Teaching Hospital", industry: "Healthcare", skills: ["Cardiology", "Research"], bio: "Cardiologist and clinical educator.", tone: tones[2] },
   { id: "a4", name: "Adaeze Okafor", initials: "AO", year: 2020, faculty: "Arts", department: "Mass Communication", location: "Abuja, Nigeria", role: "Brand Strategist", company: "MTN Nigeria", industry: "Telecom", skills: ["Brand", "Content", "PR"], bio: "Storyteller for African brands.", tone: tones[3] },
   { id: "a5", name: "Tobenna Umeh", initials: "TU", year: 2017, faculty: "Engineering", department: "Electrical Engineering", location: "Port Harcourt, Nigeria", role: "Power Systems Engineer", company: "Shell Nigeria", industry: "Energy", skills: ["Power", "MATLAB", "Project Mgmt"], bio: "Energy infrastructure for emerging grids.", tone: tones[4] },
-  { id: "a6", name: "Ngozi Ibe", initials: "NI", year: 2014, faculty: "Law", department: "Law", location: "Onitsha, Anambra", role: "Corporate Counsel", company: "Aluko & Oyebode", industry: "Legal", skills: ["M&A", "Compliance"], bio: "Corporate law and policy.", tone: tones[5] },
+  { id: "a6", name: "Ngozi Ibe", initials: "NI", year: 2014, faculty: "Law", department: "Public & Private Law", location: "Onitsha, Anambra", role: "Corporate Counsel", company: "Aluko & Oyebode", industry: "Legal", skills: ["M&A", "Compliance"], bio: "Corporate law and policy.", tone: tones[5] },
   { id: "a7", name: "Kelechi Anya", initials: "KA", year: 2019, faculty: "Pharmaceutical Sciences", department: "Pharmacy", location: "Enugu, Nigeria", role: "Clinical Pharmacist", company: "HealthPlus Nigeria", industry: "Healthcare", skills: ["Pharmacology", "Patient Care"], bio: "Patient-first community pharmacy.", tone: tones[0] },
   { id: "a8", name: "Obinna Mbah", initials: "OM", year: 2016, faculty: "Social Sciences", department: "Economics", location: "Lagos, Nigeria", role: "Quant Analyst", company: "Access Bank", industry: "Finance", skills: ["Python", "Quant", "ML"], bio: "Markets & machine learning.", tone: tones[1] },
   { id: "a9", name: "Uchechi Okeke", initials: "UO", year: 2021, faculty: "Natural Sciences", department: "Microbiology", location: "Nnewi, Anambra", role: "Research Scientist", company: "Nnamdi Azikiwe Teaching Hospital", industry: "Biotech", skills: ["Genomics", "Lab"], bio: "Vaccine research for tropical diseases.", tone: tones[2] },
