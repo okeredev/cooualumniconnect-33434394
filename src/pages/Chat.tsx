@@ -144,7 +144,19 @@ const ChatPage = () => {
           <div className="rounded-2xl bg-card border border-border/60 flex flex-col overflow-hidden">
             {active ? (
               <>
-                <div className="px-5 py-3 border-b border-border/60 font-semibold">{active.label}</div>
+                <div className="px-5 py-3 border-b border-border/60 font-semibold flex items-center gap-2">
+                  <span>{active.label}</span>
+                  {active.kind === "dm" && (() => {
+                    const peer = profilesById[active.id];
+                    const isOnline = online.has(active.id);
+                    return (
+                      <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
+                        <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500" : "bg-red-400"}`} />
+                        {isOnline ? "Online" : formatLastSeen(peer?.last_seen_at)}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-2">
                   {messages.map((m) => {
                     const mine = m.sender_id === user?.id;
