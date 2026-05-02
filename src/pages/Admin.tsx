@@ -562,11 +562,28 @@ const JobsTab = () => {
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
 
+  return <JobsTabInner jobs={jobs} editing={editing} setEditing={setEditing} load={load} save={save} remove={remove} setStatus={setStatus} />;
+};
+
+const JobsTabInner = ({ jobs, editing, setEditing, load, save, remove, setStatus }: any) => {
+  const sel = useBulkSelect(jobs);
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 justify-between">
         <Button onClick={() => setEditing({})} aria-label="Create new job"><Plus className="w-4 h-4" /> New job</Button>
-        <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-jobs-${Date.now()}`, jobs as any)} aria-label="Export jobs CSV"><Download className="w-4 h-4" /> Export ({jobs.length})</Button>
+        <div className="flex gap-2 items-center">
+          {sel.selected.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">{sel.selected.size} selected</span>
+              <Button size="sm" variant="outline" onClick={() => bulkDelete("jobs", Array.from(sel.selected), () => { sel.clear(); load(); })}><Trash2 className="w-4 h-4 text-destructive" /> Delete selected</Button>
+            </>
+          )}
+          <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-jobs-${Date.now()}`, jobs as any)}><Download className="w-4 h-4" /> Export ({jobs.length})</Button>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 px-2">
+        <input type="checkbox" checked={sel.allSelected} onChange={sel.toggleAll} aria-label="Select all jobs" />
+        <span className="text-xs text-muted-foreground">Select all</span>
       </div>
       <div className="grid gap-3">
         {jobs.map((j) => (
