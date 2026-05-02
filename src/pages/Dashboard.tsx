@@ -115,6 +115,7 @@ const DashboardPage = () => {
       website: profile.website,
       graduation_year: profile.graduation_year,
       department: profile.department,
+      hide_phone: profile.hide_phone,
     }).eq("user_id", user.id);
     setSaving(false);
     if (error) toast.error(error.message);
@@ -136,43 +137,133 @@ const DashboardPage = () => {
     else { updateProfile({ avatar_url: publicUrl }); toast.success("Avatar updated"); }
   };
 
-  const addEducation = async () => {
-    if (!user) return;
-    const { data, error } = await supabase.from("education").insert({
-      user_id: user.id, school: "New school", degree: "", field: "", start_year: new Date().getFullYear() - 4, end_year: new Date().getFullYear(),
-    }).select().single();
-    if (error) toast.error(error.message);
-    else setEducation([data as Education, ...education]);
+  // --- Education: local draft + explicit save per row ---
+  const addEducation = () => {
+    if (education.some((e) => e._isNew)) {
+      toast.error("Save the current education entry first");
+      return;
+    }
+    const draft: Education = {
+      id: `tmp-${Date.now()}`,
+      school: "",
+      degree: "",
+      field: "",
+      start_year: null,
+      end_year: null,
+      _isNew: true,
+      _dirty: true,
+    };
+    setEducation([draft, ...education]);
   };
 
-  const updateEducation = async (id: string, patch: Partial<Education>) => {
-    setEducation(education.map((e) => e.id === id ? { ...e, ...patch } : e));
-    await supabase.from("education").update(patch).eq("id", id);
+  const patchEducation = (id: string, patch: Partial<Education>) => {
+    setEducation(education.map((e) => e.id === id ? { ...e, ...patch, _dirty: true } : e));
+  };
+
+  const saveEducation = async (id: string) => {
+    if (!user) return;
+    const row = education.find((e) => e.id === id);
+    if (!row) return;
+    if (!row.school.trim()) { toast.error("School is required"); return; }
+    if (row._isNew) {
+      const { data, error } = await supabase.from("education").insert({
+        user_id: user.id,
+        school: row.school,
+        degree: row.degree,
+        field: row.field,
+        start_year: row.start_year,
+        end_year: row.end_year,
+      }).select().single();
+      if (error) return toast.error(error.message);
+      setEducation(education.map((e) => e.id === id ? { ...(data as Education) } : e));
+      toast.success("Education saved");
+    } else {
+      const { error } = await supabase.from("education").update({
+        school: row.school, degree: row.degree, field: row.field, start_year: row.start_year, end_year: row.end_year,
+      }).eq("id", id);
+      if (error) return toast.error(error.message);
+      setEducation(education.map((e) => e.id === id ? { ...e, _dirty: false } : e));
+      toast.success("Education updated");
+    }
   };
 
   const deleteEducation = async (id: string) => {
+    const row = education.find((e) => e.id === id);
+    if (row?._isNew) {
+      setEducation(education.filter((e) => e.id !== id));
+      return;
+    }
+    if (!confirm("Delete this education entry?")) return;
     await supabase.from("education").delete().eq("id", id);
     setEducation(education.filter((e) => e.id !== id));
+    toast.success("Removed");
   };
 
-  const addEmployment = async () => {
+  // --- Employment: local draft + explicit save per row ---
+  const addEmployment = () => {
+    if (employment.some((e) => e._isNew)) {
+      toast.error("Save the current employment entry first");
+      return;
+    }
+    const draft: Employment = {
+      id: `tmp-${Date.now()}`,
+      company: "",
+      title: "",
+      start_date: null,
+      end_date: null,
+      current: true,
+      description: "",
+      _isNew: true,
+      _dirty: true,
+    };
+    setEmployment([draft, ...employment]);
+  };
+
+  const patchEmployment = (id: string, patch: Partial<Employment>) => {
+    setEmployment(employment.map((e) => e.id === id ? { ...e, ...patch, _dirty: true } : e));
+  };
+
+  const saveEmployment = async (id: string) => {
     if (!user) return;
-    const { data, error } = await supabase.from("employment").insert({
-      user_id: user.id, company: "New company", title: "", current: true,
-    }).select().single();
-    if (error) toast.error(error.message);
-    else setEmployment([data as Employment, ...employment]);
-  };
-
-  const updateEmployment = async (id: string, patch: Partial<Employment>) => {
-    setEmployment(employment.map((e) => e.id === id ? { ...e, ...patch } : e));
-    await supabase.from("employment").update(patch).eq("id", id);
+    const row = employment.find((e) => e.id === id);
+    if (!row) return;
+    if (!row.company.trim()) { toast.error("Company is required"); return; }
+    if (row._isNew) {
+      const { data, error } = await supabase.from("employment").insert({
+        user_id: user.id,
+        company: row.company,
+        title: row.title,
+        start_date: row.start_date,
+        end_date: row.current ? null : row.end_date,
+        current: row.current,
+        description: row.description,
+      }).select().single();
+      if (error) return toast.error(error.message);
+      setEmployment(employment.map((e) => e.id === id ? { ...(data as Employment) } : e));
+      toast.success("Experience saved");
+    } else {
+      const { error } = await supabase.from("employment").update({
+        company: row.company, title: row.title, start_date: row.start_date,
+        end_date: row.current ? null : row.end_date, current: row.current, description: row.description,
+      }).eq("id", id);
+      if (error) return toast.error(error.message);
+      setEmployment(employment.map((e) => e.id === id ? { ...e, _dirty: false } : e));
+      toast.success("Experience updated");
+    }
   };
 
   const deleteEmployment = async (id: string) => {
+    const row = employment.find((e) => e.id === id);
+    if (row?._isNew) {
+      setEmployment(employment.filter((e) => e.id !== id));
+      return;
+    }
+    if (!confirm("Delete this experience entry?")) return;
     await supabase.from("employment").delete().eq("id", id);
     setEmployment(employment.filter((e) => e.id !== id));
+    toast.success("Removed");
   };
+
 
   if (loading || !profile) {
     return <AppShell><div className="container py-20 text-center text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div></AppShell>;
