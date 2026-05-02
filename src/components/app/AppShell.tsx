@@ -16,6 +16,7 @@ import {
 export const AppShell = ({ children }: { children: React.ReactNode }) => {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+  usePresence();
 
   const links = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
