@@ -64,7 +64,9 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingCert, setUploadingCert] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const certRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     document.title = "Dashboard — COOU Alumni Connect";
@@ -102,6 +104,7 @@ const DashboardPage = () => {
       phone: profile.phone,
       whatsapp: profile.whatsapp,
       address: profile.address,
+      current_address: profile.current_address,
       city: profile.city,
       state: profile.state,
       country: profile.country || "Nigeria",
@@ -111,11 +114,31 @@ const DashboardPage = () => {
       website: profile.website,
       graduation_year: profile.graduation_year,
       department: profile.department,
+      date_of_birth: profile.date_of_birth,
       hide_phone: profile.hide_phone,
     }).eq("user_id", user.id);
     setSaving(false);
     if (error) toast.error(error.message);
     else toast.success("Profile saved");
+  };
+
+  const uploadCertificate = async (file: File) => {
+    if (!user) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
+    const allowed = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
+    if (!allowed.includes(file.type)) { toast.error("PDF, PNG, or JPG only"); return; }
+    setUploadingCert(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/certificate-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("certificates").upload(path, file, { upsert: true });
+    if (upErr) { toast.error(upErr.message); setUploadingCert(false); return; }
+    // Private bucket — use a long-lived signed URL stored on profile (10 years)
+    const { data: signed } = await supabase.storage.from("certificates").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    const url = signed?.signedUrl ?? path;
+    const { error: updErr } = await supabase.from("profiles").update({ certificate_url: url }).eq("user_id", user.id);
+    setUploadingCert(false);
+    if (updErr) toast.error(updErr.message);
+    else { updateProfile({ certificate_url: url }); toast.success("Certificate uploaded"); }
   };
 
   const uploadAvatar = async (file: File) => {
