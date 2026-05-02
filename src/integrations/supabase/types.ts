@@ -462,9 +462,12 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           bio: string | null
+          certificate_url: string | null
           city: string | null
           country: string | null
           created_at: string
+          current_address: string | null
+          date_of_birth: string | null
           department: string | null
           display_name: string | null
           email: string | null
@@ -488,9 +491,12 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          certificate_url?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
+          current_address?: string | null
+          date_of_birth?: string | null
           department?: string | null
           display_name?: string | null
           email?: string | null
@@ -514,9 +520,12 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          certificate_url?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
+          current_address?: string | null
+          date_of_birth?: string | null
           department?: string | null
           display_name?: string | null
           email?: string | null
@@ -602,9 +611,12 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           bio: string | null
+          certificate_url: string | null
           city: string | null
           country: string | null
           created_at: string | null
+          current_address: string | null
+          date_of_birth: string | null
           department: string | null
           display_name: string | null
           email: string | null
@@ -628,9 +640,12 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          certificate_url?: never
           city?: string | null
           country?: string | null
           created_at?: string | null
+          current_address?: string | null
+          date_of_birth?: string | null
           department?: string | null
           display_name?: string | null
           email?: string | null
@@ -654,9 +669,12 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          certificate_url?: never
           city?: string | null
           country?: string | null
           created_at?: string | null
+          current_address?: string | null
+          date_of_birth?: string | null
           department?: string | null
           display_name?: string | null
           email?: string | null
