@@ -314,73 +314,80 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="profile" className="mt-8">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="education">Education</TabsTrigger>
-            <TabsTrigger value="employment">Employment</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="profile" className="mt-6">
-            <div className="rounded-2xl bg-card border border-border/60 p-6 md:p-8 space-y-6">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Display name"><Input value={profile.display_name ?? ""} onChange={(e) => updateProfile({ display_name: e.target.value })} maxLength={80} /></Field>
-                <Field label="Phone (Nigerian)"><Input value={profile.phone ?? ""} onChange={(e) => updateProfile({ phone: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
-                <Field label="WhatsApp"><Input value={profile.whatsapp ?? ""} onChange={(e) => updateProfile({ whatsapp: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
-                <Field label="Graduation year">
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.graduation_year ?? ""} onChange={(e) => updateProfile({ graduation_year: e.target.value ? Number(e.target.value) : null })}>
-                    <option value="">Select year</option>
-                    {GRAD_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </Field>
-                <Field label="Department">
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.department ?? ""} onChange={(e) => updateProfile({ department: e.target.value })}>
-                    <option value="">Select department</option>
-                    {COOU_DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </Field>
-                <Field label="State">
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.state ?? ""} onChange={(e) => updateProfile({ state: e.target.value })}>
-                    <option value="">Select state</option>
-                    {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </Field>
-                <Field label="City"><Input value={profile.city ?? ""} onChange={(e) => updateProfile({ city: e.target.value })} maxLength={80} /></Field>
-                <Field label="Address"><Input value={profile.address ?? ""} onChange={(e) => updateProfile({ address: e.target.value })} maxLength={200} /></Field>
-              </div>
-              <Field label="Bio">
-                <Textarea rows={3} value={profile.bio ?? ""} onChange={(e) => updateProfile({ bio: e.target.value })} maxLength={500} placeholder="Tell the network about yourself..." />
-              </Field>
-              <div className="rounded-xl border border-border/60 p-4 flex items-start justify-between gap-3 bg-muted/30">
-                <div>
-                  <div className="font-medium text-sm">Hide my phone number from the directory</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">Other alumni won't see your phone or WhatsApp on your public profile. Admins always see it.</div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                  <input type="checkbox" className="sr-only peer" checked={!!profile.hide_phone} onChange={(e) => updateProfile({ hide_phone: e.target.checked })} />
-                  <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-primary/40 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-card after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
-                </label>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-border/60">
-                <Field label="LinkedIn"><Input value={profile.linkedin ?? ""} onChange={(e) => updateProfile({ linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." /></Field>
-                <Field label="GitHub"><Input value={profile.github ?? ""} onChange={(e) => updateProfile({ github: e.target.value })} placeholder="https://github.com/..." /></Field>
-                <Field label="X / Twitter"><Input value={profile.twitter ?? ""} onChange={(e) => updateProfile({ twitter: e.target.value })} placeholder="https://x.com/..." /></Field>
-                <Field label="Website"><Input value={profile.website ?? ""} onChange={(e) => updateProfile({ website: e.target.value })} placeholder="https://..." /></Field>
-              </div>
+        <div className="mt-8 space-y-8">
+          {/* Biodata */}
+          <div className="rounded-2xl bg-card border border-border/60 p-6 md:p-8 space-y-6">
+            <div>
+              <h2 className="font-display text-xl font-semibold text-primary">Biodata</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">Your core profile shown across the network.</p>
             </div>
-          </TabsContent>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label="Display name"><Input value={profile.display_name ?? ""} onChange={(e) => updateProfile({ display_name: e.target.value })} maxLength={80} /></Field>
+              <Field label="Phone (Nigerian)"><Input value={profile.phone ?? ""} onChange={(e) => updateProfile({ phone: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
+              <Field label="WhatsApp"><Input value={profile.whatsapp ?? ""} onChange={(e) => updateProfile({ whatsapp: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
+              <Field label="Graduation year">
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.graduation_year ?? ""} onChange={(e) => updateProfile({ graduation_year: e.target.value ? Number(e.target.value) : null })}>
+                  <option value="">Select year</option>
+                  {GRAD_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </Field>
+              <Field label="Department">
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.department ?? ""} onChange={(e) => updateProfile({ department: e.target.value })}>
+                  <option value="">Select department</option>
+                  {COOU_DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </Field>
+              <Field label="State">
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.state ?? ""} onChange={(e) => updateProfile({ state: e.target.value })}>
+                  <option value="">Select state</option>
+                  {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </Field>
+              <Field label="City"><Input value={profile.city ?? ""} onChange={(e) => updateProfile({ city: e.target.value })} maxLength={80} /></Field>
+              <Field label="Address"><Input value={profile.address ?? ""} onChange={(e) => updateProfile({ address: e.target.value })} maxLength={200} /></Field>
+            </div>
+            <Field label="Bio">
+              <Textarea rows={3} value={profile.bio ?? ""} onChange={(e) => updateProfile({ bio: e.target.value })} maxLength={500} placeholder="Tell the network about yourself..." />
+            </Field>
+            <div className="rounded-xl border border-border/60 p-4 flex items-start justify-between gap-3 bg-muted/30">
+              <div>
+                <div className="font-medium text-sm">Hide my phone number from the directory</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Other alumni won't see your phone or WhatsApp on your public profile. Admins always see it.</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" className="sr-only peer" checked={!!profile.hide_phone} onChange={(e) => updateProfile({ hide_phone: e.target.checked })} />
+                <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-primary/40 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-card after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+              </label>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-border/60">
+              <Field label="LinkedIn"><Input value={profile.linkedin ?? ""} onChange={(e) => updateProfile({ linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." /></Field>
+              <Field label="GitHub"><Input value={profile.github ?? ""} onChange={(e) => updateProfile({ github: e.target.value })} placeholder="https://github.com/..." /></Field>
+              <Field label="X / Twitter"><Input value={profile.twitter ?? ""} onChange={(e) => updateProfile({ twitter: e.target.value })} placeholder="https://x.com/..." /></Field>
+              <Field label="Website"><Input value={profile.website ?? ""} onChange={(e) => updateProfile({ website: e.target.value })} placeholder="https://..." /></Field>
+            </div>
+          </div>
 
-          <TabsContent value="education" className="mt-6 space-y-3">
-            <Button variant="outline" onClick={addEducation}><Plus className="w-4 h-4" /> Add education</Button>
+          {/* Education — moved directly under biodata so users don't skip it */}
+          <div className="rounded-2xl bg-card border border-border/60 p-6 md:p-8 space-y-4">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className="font-display text-xl font-semibold text-primary">Education <span className="text-destructive">*</span></h2>
+                <p className="text-sm text-muted-foreground mt-0.5">Add every school you've attended. Save each entry before adding another.</p>
+              </div>
+              <Button variant="outline" onClick={addEducation}><Plus className="w-4 h-4" /> Add education</Button>
+            </div>
+            <datalist id="schools-list">
+              {NIGERIAN_SCHOOLS.map((s) => <option key={s} value={s} />)}
+            </datalist>
             {education.map((e) => (
-              <div key={e.id} className="rounded-2xl bg-card border border-border/60 p-5 space-y-3">
+              <div key={e.id} className="rounded-2xl bg-muted/20 border border-border/60 p-5 space-y-3">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <Input value={e.school} onChange={(ev) => patchEducation(e.id, { school: ev.target.value })} placeholder="School *" />
+                  <Input list="schools-list" value={e.school} onChange={(ev) => patchEducation(e.id, { school: ev.target.value })} placeholder="School * (start typing to pick from list)" />
                   <Input value={e.degree ?? ""} onChange={(ev) => patchEducation(e.id, { degree: ev.target.value })} placeholder="Degree (e.g. B.Sc.)" />
                   <Input value={e.field ?? ""} onChange={(ev) => patchEducation(e.id, { field: ev.target.value })} placeholder="Field of study" />
                   <div className="flex gap-2">
-                    <Input type="number" value={e.start_year ?? ""} onChange={(ev) => patchEducation(e.id, { start_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="Start year" />
-                    <Input type="number" value={e.end_year ?? ""} onChange={(ev) => patchEducation(e.id, { end_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="End year" />
+                    <Input type="number" min={1980} max={2030} value={e.start_year ?? ""} onChange={(ev) => patchEducation(e.id, { start_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="Start year" />
+                    <Input type="number" min={1980} max={2030} value={e.end_year ?? ""} onChange={(ev) => patchEducation(e.id, { end_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="End year" />
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
@@ -394,13 +401,20 @@ const DashboardPage = () => {
                 </div>
               </div>
             ))}
-            {education.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No education added yet.</p>}
-          </TabsContent>
+            {education.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No education added yet. Click "Add education" to start.</p>}
+          </div>
 
-          <TabsContent value="employment" className="mt-6 space-y-3">
-            <Button variant="outline" onClick={addEmployment}><Plus className="w-4 h-4" /> Add experience</Button>
+          {/* Employment */}
+          <div className="rounded-2xl bg-card border border-border/60 p-6 md:p-8 space-y-4">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className="font-display text-xl font-semibold text-primary">Employment <span className="text-destructive">*</span></h2>
+                <p className="text-sm text-muted-foreground mt-0.5">Add your work history. Save each role before adding another.</p>
+              </div>
+              <Button variant="outline" onClick={addEmployment}><Plus className="w-4 h-4" /> Add experience</Button>
+            </div>
             {employment.map((w) => (
-              <div key={w.id} className="rounded-2xl bg-card border border-border/60 p-5 space-y-3">
+              <div key={w.id} className="rounded-2xl bg-muted/20 border border-border/60 p-5 space-y-3">
                 <div className="grid sm:grid-cols-2 gap-3">
                   <Input value={w.company} onChange={(ev) => patchEmployment(w.id, { company: ev.target.value })} placeholder="Company *" />
                   <Input value={w.title ?? ""} onChange={(ev) => patchEmployment(w.id, { title: ev.target.value })} placeholder="Title" />
@@ -425,9 +439,9 @@ const DashboardPage = () => {
                 </div>
               </div>
             ))}
-            {employment.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No experience added yet.</p>}
-          </TabsContent>
-        </Tabs>
+            {employment.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No experience added yet. Click "Add experience" to start.</p>}
+          </div>
+        </div>
       </section>
     </AppShell>
   );
