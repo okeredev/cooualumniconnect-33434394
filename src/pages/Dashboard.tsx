@@ -303,6 +303,9 @@ const DashboardPage = () => {
                 </div>
                 <h1 className="font-display text-3xl md:text-4xl font-semibold mt-1">{profile.display_name || "Your name"}</h1>
                 <p className="text-primary-foreground/70 mt-1">{profile.email}</p>
+                <p className="text-primary-foreground/60 text-xs mt-2 max-w-md">
+                  📷 <strong>Upload a passport photograph</strong> — clear, front-facing headshot on a plain background. Tap the gold button on your photo to upload (JPG/PNG, max 5MB).
+                </p>
               </div>
             </div>
             <Button variant="gold" size="sm" onClick={saveProfile} disabled={saving}>
