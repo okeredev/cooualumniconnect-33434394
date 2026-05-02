@@ -16,7 +16,7 @@ export const usePresence = () => {
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase.channel(PRESENCE_CHANNEL, {
+    const channel = supabase.channel(`${PRESENCE_CHANNEL}-${user.id}-${Math.random().toString(36).slice(2, 8)}`, {
       config: { presence: { key: user.id } },
     });
 
