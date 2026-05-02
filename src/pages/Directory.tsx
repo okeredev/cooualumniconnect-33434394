@@ -54,7 +54,7 @@ const DirectoryPage = () => {
       const [{ data: ps }, { data: emps }, { data: edus }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("user_id, display_name, avatar_url, bio, email, city, state, country, department, graduation_year, verified, linkedin, github, twitter, website, phone, whatsapp")
+          .select("user_id, display_name, avatar_url, bio, email, city, state, country, department, graduation_year, verified, linkedin, github, twitter, website, phone, whatsapp, hide_phone")
           .eq("suspended", false)
           .order("created_at", { ascending: false }),
         supabase.from("employment").select("user_id, company, title, start_date, end_date, current, description").order("current", { ascending: false }),
