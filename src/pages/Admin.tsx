@@ -13,6 +13,33 @@ import { downloadCsv } from "@/lib/csv";
 
 type Role = "admin" | "moderator" | "user";
 
+// Generic bulk-selection helper used by every admin table
+const useBulkSelect = <T extends { id: string }>(items: T[]) => {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    // Drop ids that no longer exist after a refresh
+    setSelected((prev) => {
+      const valid = new Set(items.map((i) => i.id));
+      const next = new Set<string>();
+      prev.forEach((id) => valid.has(id) && next.add(id));
+      return next;
+    });
+  }, [items]);
+  const allSelected = items.length > 0 && items.every((i) => selected.has(i.id));
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(items.map((i) => i.id)));
+  const toggleOne = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const clear = () => setSelected(new Set());
+  return { selected, allSelected, toggleAll, toggleOne, clear };
+};
+
+const bulkDelete = async (table: string, ids: string[], onDone: () => void) => {
+  if (ids.length === 0) return;
+  if (!confirm(`Delete ${ids.length} selected item${ids.length > 1 ? "s" : ""}? This cannot be undone.`)) return;
+  const { error } = await supabase.from(table as any).delete().in("id", ids);
+  if (error) toast.error(error.message);
+  else { toast.success(`Deleted ${ids.length} item${ids.length > 1 ? "s" : ""}`); onDone(); }
+};
+
 type ProfileRow = {
   id: string; user_id: string; display_name: string | null; email: string | null; avatar_url: string | null;
   verified: boolean; suspended: boolean; created_at: string; department: string | null; graduation_year: number | null;
