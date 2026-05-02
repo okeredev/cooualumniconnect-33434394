@@ -43,8 +43,8 @@ type Profile = {
   hide_phone: boolean;
 };
 
-type Education = { id: string; school: string; degree: string | null; field: string | null; start_year: number | null; end_year: number | null };
-type Employment = { id: string; company: string; title: string | null; start_date: string | null; end_date: string | null; current: boolean; description: string | null };
+type Education = { id: string; school: string; degree: string | null; field: string | null; start_year: number | null; end_year: number | null; _isNew?: boolean; _dirty?: boolean };
+type Employment = { id: string; company: string; title: string | null; start_date: string | null; end_date: string | null; current: boolean; description: string | null; _isNew?: boolean; _dirty?: boolean };
 
 const profileSchema = z.object({
   display_name: z.string().trim().min(2).max(80),
