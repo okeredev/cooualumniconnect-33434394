@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePresence, formatLastSeen } from "@/hooks/usePresence";
 import { Hash, Loader2, MessageCircle, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 
 type Channel = { id: string; name: string; description: string | null };
 type Message = { id: string; sender_id: string; channel_id: string | null; recipient_id: string | null; content: string; created_at: string };
-type ProfileMini = { user_id: string; display_name: string | null; avatar_url: string | null };
+type ProfileMini = { user_id: string; display_name: string | null; avatar_url: string | null; last_seen_at: string | null };
 
 type ActiveTarget = { kind: "channel"; id: string; label: string } | { kind: "dm"; id: string; label: string };
 
