@@ -40,6 +40,7 @@ type Profile = {
   graduation_year: number | null;
   department: string | null;
   verified: boolean;
+  hide_phone: boolean;
 };
 
 type Education = { id: string; school: string; degree: string | null; field: string | null; start_year: number | null; end_year: number | null };
