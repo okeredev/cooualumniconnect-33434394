@@ -29,6 +29,7 @@ type Profile = {
   website: string | null;
   phone: string | null;
   whatsapp: string | null;
+  hide_phone: boolean;
 };
 
 type Employment = { user_id: string; company: string; title: string | null; start_date: string | null; end_date: string | null; current: boolean; description: string | null };
