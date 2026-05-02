@@ -10,6 +10,7 @@ import { Search, MapPin, Briefcase, X, BadgeCheck, Flag, Linkedin, Github, Globe
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { normalizeUrl } from "@/lib/url";
 
 type Profile = {
   user_id: string;
@@ -161,9 +162,9 @@ const DirectoryPage = () => {
                       {(a.city || a.state) && <div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">{[a.city, a.state].filter(Boolean).join(", ")}</span></div>}
                     </div>
                     <div className="mt-3 flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
-                      {a.linkedin && <a href={a.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary"><Linkedin className="w-4 h-4" /></a>}
-                      {a.github && <a href={a.github} target="_blank" rel="noreferrer" aria-label="GitHub" className="text-muted-foreground hover:text-primary"><Github className="w-4 h-4" /></a>}
-                      {a.website && <a href={a.website} target="_blank" rel="noreferrer" aria-label="Website" className="text-muted-foreground hover:text-primary"><Globe className="w-4 h-4" /></a>}
+                      {a.linkedin && <a href={normalizeUrl(a.linkedin)} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary"><Linkedin className="w-4 h-4" /></a>}
+                      {a.github && <a href={normalizeUrl(a.github)} target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-muted-foreground hover:text-primary"><Github className="w-4 h-4" /></a>}
+                      {a.website && <a href={normalizeUrl(a.website)} target="_blank" rel="noopener noreferrer" aria-label="Website" className="text-muted-foreground hover:text-primary"><Globe className="w-4 h-4" /></a>}
                       <div className="flex-1" />
                       <button onClick={() => setActive(a)} className="text-xs font-medium text-primary hover:text-primary-glow" aria-label={`View ${a.display_name ?? "profile"}`}>View →</button>
                     </div>
@@ -248,10 +249,10 @@ const DirectoryPage = () => {
                     {active.email && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary truncate" href={`mailto:${active.email}`}><Mail className="w-4 h-4 flex-shrink-0" /><span className="truncate">{active.email}</span></a>}
                     {active.phone && (!active.hide_phone || isAdmin || user?.id === active.user_id) && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={`tel:${active.phone}`}><Phone className="w-4 h-4 flex-shrink-0" />{active.phone}{active.hide_phone && <span className="text-[10px] uppercase tracking-wider text-gold ml-1">(hidden)</span>}</a>}
                     {active.whatsapp && (!active.hide_phone || isAdmin || user?.id === active.user_id) && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={`https://wa.me/${active.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle className="w-4 h-4 flex-shrink-0" />WhatsApp</a>}
-                    {active.linkedin && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={active.linkedin} target="_blank" rel="noreferrer"><Linkedin className="w-4 h-4 flex-shrink-0" />LinkedIn</a>}
-                    {active.github && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={active.github} target="_blank" rel="noreferrer"><Github className="w-4 h-4 flex-shrink-0" />GitHub</a>}
-                    {active.twitter && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={active.twitter} target="_blank" rel="noreferrer"><Twitter className="w-4 h-4 flex-shrink-0" />X / Twitter</a>}
-                    {active.website && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary truncate" href={active.website} target="_blank" rel="noreferrer"><Globe className="w-4 h-4 flex-shrink-0" /><span className="truncate">Website</span></a>}
+                    {active.linkedin && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={normalizeUrl(active.linkedin)} target="_blank" rel="noopener noreferrer"><Linkedin className="w-4 h-4 flex-shrink-0" />LinkedIn</a>}
+                    {active.github && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={normalizeUrl(active.github)} target="_blank" rel="noopener noreferrer"><Github className="w-4 h-4 flex-shrink-0" />GitHub</a>}
+                    {active.twitter && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={normalizeUrl(active.twitter)} target="_blank" rel="noopener noreferrer"><Twitter className="w-4 h-4 flex-shrink-0" />X / Twitter</a>}
+                    {active.website && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary truncate" href={normalizeUrl(active.website)} target="_blank" rel="noopener noreferrer"><Globe className="w-4 h-4 flex-shrink-0" /><span className="truncate">Website</span></a>}
                   </div>
                 </section>
 

@@ -636,15 +636,26 @@ const JobsTabInner = ({ jobs, editing, setEditing, load, save, remove, setStatus
   );
 };
 
-// -------- Events --------
+// -------- Events (advanced: bulk select, view, delete) --------
 const EventsTab = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [editing, setEditing] = useState<Partial<Event> | null>(null);
+  const [viewing, setViewing] = useState<Event | null>(null);
+  const [rsvpCounts, setRsvpCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const sel = useBulkSelect(events);
 
   const load = async () => {
     const { data } = await supabase.from("events").select("*").order("starts_at", { ascending: true });
-    setEvents((data ?? []) as Event[]);
+    const list = (data ?? []) as Event[];
+    setEvents(list);
+    if (list.length) {
+      const ids = list.map((e) => e.id);
+      const { data: rs } = await supabase.from("event_rsvps").select("event_id").in("event_id", ids);
+      const map: Record<string, number> = {};
+      (rs ?? []).forEach((r: any) => { map[r.event_id] = (map[r.event_id] ?? 0) + 1; });
+      setRsvpCounts(map);
+    }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -659,7 +670,7 @@ const EventsTab = () => {
     else { toast.success("Saved"); setEditing(null); load(); }
   };
   const remove = async (id: string) => {
-    if (!confirm("Delete event?")) return;
+    if (!confirm("Delete event? This also removes all RSVPs.")) return;
     await supabase.from("events").delete().eq("id", id);
     toast.success("Deleted"); load();
   };
@@ -668,16 +679,38 @@ const EventsTab = () => {
 
   return (
     <div className="space-y-4">
-      <Button onClick={() => setEditing({})}><Plus className="w-4 h-4" /> New event</Button>
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <Button onClick={() => setEditing({})}><Plus className="w-4 h-4" /> New event</Button>
+        <div className="flex gap-2 items-center">
+          {sel.selected.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">{sel.selected.size} selected</span>
+              <Button size="sm" variant="outline" onClick={() => bulkDelete("events", Array.from(sel.selected), () => { sel.clear(); load(); })}><Trash2 className="w-4 h-4 text-destructive" /> Delete selected</Button>
+            </>
+          )}
+          <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-events-${Date.now()}`, events as any)}><Download className="w-4 h-4" /> Export ({events.length})</Button>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 px-2">
+        <input type="checkbox" checked={sel.allSelected} onChange={sel.toggleAll} aria-label="Select all events" />
+        <span className="text-xs text-muted-foreground">Select all</span>
+      </div>
       <div className="grid gap-3">
         {events.map((e) => (
-          <div key={e.id} className="rounded-2xl bg-card border border-border/60 p-5 flex items-start justify-between gap-4">
-            <div>
-              <div className="font-display font-semibold text-primary">{e.title}</div>
-              <div className="text-sm text-muted-foreground">{new Date(e.starts_at).toLocaleString()} · {e.location}</div>
-              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{e.description}</p>
+          <div key={e.id} className={`rounded-2xl bg-card border border-border/60 p-5 flex flex-col md:flex-row md:items-start md:justify-between gap-3 ${sel.selected.has(e.id) ? "ring-2 ring-primary/40" : ""}`}>
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              <input type="checkbox" className="mt-1.5" checked={sel.selected.has(e.id)} onChange={() => sel.toggleOne(e.id)} aria-label={`Select ${e.title}`} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-display font-semibold text-primary">{e.title}</span>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-muted">{rsvpCounts[e.id] ?? 0} RSVPs</span>
+                </div>
+                <div className="text-sm text-muted-foreground">{new Date(e.starts_at).toLocaleString()} · {e.location || "—"}</div>
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{e.description}</p>
+              </div>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1 flex-shrink-0">
+              <Button size="sm" variant="ghost" onClick={() => setViewing(e)} title="View details"><Eye className="w-4 h-4" /></Button>
               <Button size="sm" variant="ghost" onClick={() => setEditing(e)}><Pencil className="w-4 h-4" /></Button>
               <Button size="sm" variant="ghost" onClick={() => remove(e.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
             </div>
@@ -704,17 +737,55 @@ const EventsTab = () => {
           <DialogFooter><Button onClick={save}>Save</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {viewing && (
+            <>
+              <DialogHeader><DialogTitle className="font-display text-xl">{viewing.title}</DialogTitle></DialogHeader>
+              {viewing.image_url && <img src={viewing.image_url} alt="" className="w-full h-48 object-cover rounded-lg" />}
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <DetailRow label="Starts" value={new Date(viewing.starts_at).toLocaleString()} />
+                  <DetailRow label="Ends" value={viewing.ends_at ? new Date(viewing.ends_at).toLocaleString() : "—"} />
+                  <DetailRow label="Location" value={viewing.location || "—"} />
+                  <DetailRow label="RSVPs" value={rsvpCounts[viewing.id] ?? 0} />
+                </div>
+                {viewing.description && <div><Label className="text-xs uppercase tracking-wider text-muted-foreground">Description</Label><p className="mt-1 whitespace-pre-line">{viewing.description}</p></div>}
+                <div className="text-xs text-muted-foreground">Event ID: <code className="text-[10px]">{viewing.id}</code></div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setEditing(viewing); setViewing(null); }}><Pencil className="w-4 h-4" /> Edit</Button>
+                <Button variant="outline" onClick={() => { remove(viewing.id); setViewing(null); }}><Trash2 className="w-4 h-4 text-destructive" /> Delete</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-// -------- Reports --------
+// -------- Reports (advanced: bulk delete, view detail with reporter & target profiles) --------
 const ReportsTab = () => {
   const [reports, setReports] = useState<Report[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, { name: string | null; email: string | null }>>({});
+  const [viewing, setViewing] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
+  const sel = useBulkSelect(reports);
+
   const load = async () => {
     const { data } = await supabase.from("directory_reports").select("*").order("created_at", { ascending: false });
-    setReports((data ?? []) as Report[]); setLoading(false);
+    const list = (data ?? []) as Report[];
+    setReports(list);
+    const ids = Array.from(new Set([...list.map((r) => r.reporter_id), ...list.map((r) => r.reported_user_id)]));
+    if (ids.length) {
+      const { data: ps } = await supabase.from("profiles").select("user_id, display_name, email").in("user_id", ids);
+      const m: Record<string, { name: string | null; email: string | null }> = {};
+      (ps ?? []).forEach((p: any) => { m[p.user_id] = { name: p.display_name, email: p.email }; });
+      setProfiles(m);
+    }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
@@ -722,37 +793,109 @@ const ReportsTab = () => {
     await supabase.from("directory_reports").update({ resolved: true }).eq("id", id);
     toast.success("Resolved"); load();
   };
+  const remove = async (id: string) => {
+    if (!confirm("Delete report?")) return;
+    await supabase.from("directory_reports").delete().eq("id", id);
+    toast.success("Deleted"); load();
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
 
   return (
-    <div className="space-y-3">
-      {reports.map((r) => (
-        <div key={r.id} className="rounded-2xl bg-card border border-border/60 p-5 flex items-start justify-between gap-4">
-          <div>
-            <div className="text-sm">Reported user: <code className="text-xs">{r.reported_user_id}</code></div>
-            <p className="mt-1">{r.reason}</p>
-            <div className="text-xs text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString()}</div>
-          </div>
-          {!r.resolved ? (
-            <Button size="sm" onClick={() => resolve(r.id)}>Resolve</Button>
-          ) : (
-            <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Resolved</span>
-          )}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <div className="flex items-center gap-2">
+          <input type="checkbox" checked={sel.allSelected} onChange={sel.toggleAll} aria-label="Select all reports" />
+          <span className="text-xs text-muted-foreground">Select all · {reports.length} total</span>
         </div>
-      ))}
-      {reports.length === 0 && <p className="text-center text-muted-foreground py-8">No reports.</p>}
+        <div className="flex gap-2 items-center">
+          {sel.selected.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">{sel.selected.size} selected</span>
+              <Button size="sm" variant="outline" onClick={() => bulkDelete("directory_reports", Array.from(sel.selected), () => { sel.clear(); load(); })}><Trash2 className="w-4 h-4 text-destructive" /> Delete selected</Button>
+            </>
+          )}
+          <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-reports-${Date.now()}`, reports as any)}><Download className="w-4 h-4" /> Export</Button>
+        </div>
+      </div>
+      <div className="grid gap-3">
+        {reports.map((r) => {
+          const reporter = profiles[r.reporter_id];
+          const target = profiles[r.reported_user_id];
+          return (
+            <div key={r.id} className={`rounded-2xl bg-card border border-border/60 p-5 flex flex-col md:flex-row md:items-start md:justify-between gap-3 ${sel.selected.has(r.id) ? "ring-2 ring-primary/40" : ""}`}>
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <input type="checkbox" className="mt-1.5" checked={sel.selected.has(r.id)} onChange={() => sel.toggleOne(r.id)} aria-label="Select report" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm">
+                    <span className="font-medium">{reporter?.name || reporter?.email || "Unknown"}</span>
+                    <span className="text-muted-foreground"> reported </span>
+                    <span className="font-medium">{target?.name || target?.email || "Unknown"}</span>
+                  </div>
+                  <p className="text-sm mt-1 line-clamp-2">{r.reason}</p>
+                  <div className="text-xs text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString()}</div>
+                </div>
+              </div>
+              <div className="flex gap-1 flex-shrink-0 items-center">
+                {r.resolved
+                  ? <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Resolved</span>
+                  : <Button size="sm" onClick={() => resolve(r.id)}>Resolve</Button>}
+                <Button size="sm" variant="ghost" onClick={() => setViewing(r)}><Eye className="w-4 h-4" /></Button>
+                <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+              </div>
+            </div>
+          );
+        })}
+        {reports.length === 0 && <p className="text-center text-muted-foreground py-8">No reports.</p>}
+      </div>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent>
+          {viewing && (
+            <>
+              <DialogHeader><DialogTitle>Report details</DialogTitle></DialogHeader>
+              <div className="space-y-3 text-sm">
+                <DetailRow label="Reporter" value={profiles[viewing.reporter_id]?.name || profiles[viewing.reporter_id]?.email || viewing.reporter_id} />
+                <DetailRow label="Reported user" value={profiles[viewing.reported_user_id]?.name || profiles[viewing.reported_user_id]?.email || viewing.reported_user_id} />
+                <DetailRow label="Submitted" value={new Date(viewing.created_at).toLocaleString()} />
+                <DetailRow label="Status" value={viewing.resolved ? "Resolved" : "Open"} />
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Reason</Label>
+                  <p className="mt-1 whitespace-pre-line">{viewing.reason}</p>
+                </div>
+              </div>
+              <DialogFooter>
+                {!viewing.resolved && <Button onClick={() => { resolve(viewing.id); setViewing(null); }}>Mark resolved</Button>}
+                <Button variant="outline" onClick={() => { remove(viewing.id); setViewing(null); }}><Trash2 className="w-4 h-4 text-destructive" /> Delete</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-// -------- Donations --------
+// -------- Donations (advanced: bulk select, donor profile lookup, view detail) --------
 const DonationsTab = () => {
   const [items, setItems] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, { name: string | null; email: string | null }>>({});
+  const [viewing, setViewing] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const sel = useBulkSelect(items);
+
   const load = async () => {
     const { data } = await supabase.from("donations").select("*").order("created_at", { ascending: false });
-    setItems(data ?? []); setLoading(false);
+    const list = data ?? [];
+    setItems(list);
+    const ids = Array.from(new Set(list.map((d: any) => d.user_id)));
+    if (ids.length) {
+      const { data: ps } = await supabase.from("profiles").select("user_id, display_name, email").in("user_id", ids);
+      const m: Record<string, { name: string | null; email: string | null }> = {};
+      (ps ?? []).forEach((p: any) => { m[p.user_id] = { name: p.display_name, email: p.email }; });
+      setProfiles(m);
+    }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
@@ -772,51 +915,117 @@ const DonationsTab = () => {
         <Stat label="Pledged amount" value={total.toLocaleString()} />
         <Stat label="Fulfilled" value={fulfilled.toLocaleString()} />
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center gap-2">
+        <div className="flex items-center gap-2">
+          {sel.selected.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">{sel.selected.size} selected</span>
+              <Button size="sm" variant="outline" onClick={() => bulkDelete("donations", Array.from(sel.selected), () => { sel.clear(); load(); })}><Trash2 className="w-4 h-4 text-destructive" /> Delete selected</Button>
+            </>
+          )}
+        </div>
         <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-donations-${Date.now()}`, items as any)}><Download className="w-4 h-4" /> Export</Button>
       </div>
       <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
-            <tr><th className="text-left p-3">Donor</th><th className="text-left p-3">Amount</th><th className="text-left p-3">Purpose</th><th className="text-left p-3">Status</th><th className="text-right p-3">Actions</th></tr>
+            <tr>
+              <th className="p-3 w-8"><input type="checkbox" checked={sel.allSelected} onChange={sel.toggleAll} aria-label="Select all" /></th>
+              <th className="text-left p-3">Donor</th><th className="text-left p-3">Amount</th><th className="text-left p-3">Purpose</th><th className="text-left p-3">Status</th><th className="text-right p-3">Actions</th>
+            </tr>
           </thead>
           <tbody>
-            {items.map((d) => (
-              <tr key={d.id} className="border-t border-border/60">
-                <td className="p-3 text-xs"><code>{d.user_id.slice(0, 8)}…</code><div className="text-[11px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</div></td>
-                <td className="p-3 font-medium">{d.currency} {Number(d.amount).toLocaleString()}</td>
-                <td className="p-3 text-muted-foreground">{d.purpose || "—"}</td>
-                <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${d.status === "fulfilled" ? "bg-green-100 text-green-800" : d.status === "cancelled" ? "bg-muted text-muted-foreground" : "bg-amber-100 text-amber-800"}`}>{d.status}</span></td>
-                <td className="p-3 text-right">
-                  <div className="flex gap-1 justify-end">
-                    {d.status !== "fulfilled" && <Button size="sm" variant="outline" onClick={() => setStatus(d.id, "fulfilled")}>Mark fulfilled</Button>}
-                    {d.status !== "cancelled" && <Button size="sm" variant="ghost" onClick={() => setStatus(d.id, "cancelled")}>Cancel</Button>}
-                    <Button size="sm" variant="ghost" onClick={() => remove(d.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No pledges yet.</td></tr>}
+            {items.map((d) => {
+              const donor = profiles[d.user_id];
+              return (
+                <tr key={d.id} className={`border-t border-border/60 ${sel.selected.has(d.id) ? "bg-muted/40" : ""}`}>
+                  <td className="p-3"><input type="checkbox" checked={sel.selected.has(d.id)} onChange={() => sel.toggleOne(d.id)} aria-label="Select" /></td>
+                  <td className="p-3 text-xs">
+                    <div className="font-medium">{donor?.name || "Unknown"}</div>
+                    <div className="text-[11px] text-muted-foreground truncate max-w-[180px]">{donor?.email || d.user_id.slice(0, 8) + "…"}</div>
+                    <div className="text-[11px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</div>
+                  </td>
+                  <td className="p-3 font-medium">{d.currency} {Number(d.amount).toLocaleString()}</td>
+                  <td className="p-3 text-muted-foreground truncate max-w-[200px]">{d.purpose || "—"}</td>
+                  <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${d.status === "fulfilled" ? "bg-green-100 text-green-800" : d.status === "cancelled" ? "bg-muted text-muted-foreground" : "bg-amber-100 text-amber-800"}`}>{d.status}</span></td>
+                  <td className="p-3 text-right">
+                    <div className="flex gap-1 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => setViewing(d)} title="View"><Eye className="w-4 h-4" /></Button>
+                      {d.status !== "fulfilled" && <Button size="sm" variant="outline" onClick={() => setStatus(d.id, "fulfilled")}>Fulfill</Button>}
+                      {d.status !== "cancelled" && <Button size="sm" variant="ghost" onClick={() => setStatus(d.id, "cancelled")}>Cancel</Button>}
+                      <Button size="sm" variant="ghost" onClick={() => remove(d.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {items.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No pledges yet.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent>
+          {viewing && (
+            <>
+              <DialogHeader><DialogTitle>Pledge details</DialogTitle></DialogHeader>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <DetailRow label="Donor" value={profiles[viewing.user_id]?.name || "Unknown"} />
+                <DetailRow label="Email" value={profiles[viewing.user_id]?.email || "—"} />
+                <DetailRow label="Amount" value={`${viewing.currency} ${Number(viewing.amount).toLocaleString()}`} />
+                <DetailRow label="Status" value={viewing.status} />
+                <DetailRow label="Purpose" value={viewing.purpose || "—"} />
+                <DetailRow label="Created" value={new Date(viewing.created_at).toLocaleString()} />
+              </div>
+              {viewing.message && <div className="mt-3"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Message</Label><p className="mt-1 whitespace-pre-line text-sm">{viewing.message}</p></div>}
+              <DialogFooter>
+                {viewing.status !== "fulfilled" && <Button onClick={() => { setStatus(viewing.id, "fulfilled"); setViewing(null); }}>Mark fulfilled</Button>}
+                <Button variant="outline" onClick={() => { remove(viewing.id); setViewing(null); }}><Trash2 className="w-4 h-4 text-destructive" /> Delete</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-// -------- Mentorship --------
+// -------- Mentorship (advanced: bulk select, request status, view profiles) --------
 const MentorshipTab = () => {
   const [mentors, setMentors] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, { name: string | null; email: string | null }>>({});
+  const [viewMentor, setViewMentor] = useState<any | null>(null);
+  const [viewReq, setViewReq] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const mentorSel = useBulkSelect(mentors);
+  const reqSel = useBulkSelect(requests);
+
   const load = async () => {
     const [m, r] = await Promise.all([
       supabase.from("mentor_profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("mentorship_requests").select("*").order("created_at", { ascending: false }),
     ]);
-    setMentors(m.data ?? []); setRequests(r.data ?? []); setLoading(false);
+    setMentors(m.data ?? []); setRequests(r.data ?? []);
+    const ids = Array.from(new Set([
+      ...((m.data ?? []).map((x: any) => x.user_id)),
+      ...((r.data ?? []).map((x: any) => x.mentor_id)),
+      ...((r.data ?? []).map((x: any) => x.mentee_id)),
+    ]));
+    if (ids.length) {
+      const { data: ps } = await supabase.from("profiles").select("user_id, display_name, email").in("user_id", ids);
+      const map: Record<string, { name: string | null; email: string | null }> = {};
+      (ps ?? []).forEach((p: any) => { map[p.user_id] = { name: p.display_name, email: p.email }; });
+      setProfiles(map);
+    }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  const setReqStatus = async (id: string, status: string) => {
+    await supabase.from("mentorship_requests").update({ status }).eq("id", id);
+    toast.success(`Marked ${status}`); load();
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
   const accepted = requests.filter((r) => r.status === "accepted").length;
@@ -831,35 +1040,131 @@ const MentorshipTab = () => {
         <Button size="sm" variant="outline" onClick={() => downloadCsv(`mentors-${Date.now()}`, mentors as any)}><Download className="w-4 h-4" /> Mentors</Button>
         <Button size="sm" variant="outline" onClick={() => downloadCsv(`mentorship-requests-${Date.now()}`, requests as any)}><Download className="w-4 h-4" /> Requests</Button>
       </div>
+
       <div>
-        <h3 className="font-semibold mb-2">Mentors</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold">Mentors ({mentors.length})</h3>
+          {mentorSel.selected.size > 0 && (
+            <Button size="sm" variant="outline" onClick={() => bulkDelete("mentor_profiles", Array.from(mentorSel.selected), () => { mentorSel.clear(); load(); })}><Trash2 className="w-4 h-4 text-destructive" /> Delete {mentorSel.selected.size}</Button>
+          )}
+        </div>
         <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="text-left p-3">User</th><th className="text-left p-3">Topics</th><th className="text-left p-3">Capacity</th><th className="text-left p-3">Available</th></tr></thead>
+            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="p-3 w-8"><input type="checkbox" checked={mentorSel.allSelected} onChange={mentorSel.toggleAll} aria-label="Select all mentors" /></th>
+                <th className="text-left p-3">Mentor</th><th className="text-left p-3">Topics</th><th className="text-left p-3">Capacity</th><th className="text-left p-3">Available</th><th className="text-right p-3">Actions</th>
+              </tr>
+            </thead>
             <tbody>
-              {mentors.map((m) => (
-                <tr key={m.id} className="border-t border-border/60">
-                  <td className="p-3 text-xs"><code>{m.user_id.slice(0, 8)}…</code></td>
-                  <td className="p-3 text-muted-foreground">{(m.topics ?? []).join(", ") || "—"}</td>
-                  <td className="p-3">{m.capacity}</td>
-                  <td className="p-3">{m.available ? "Yes" : "No"}</td>
-                </tr>
-              ))}
-              {mentors.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No mentors yet.</td></tr>}
+              {mentors.map((m) => {
+                const p = profiles[m.user_id];
+                return (
+                  <tr key={m.id} className={`border-t border-border/60 ${mentorSel.selected.has(m.id) ? "bg-muted/40" : ""}`}>
+                    <td className="p-3"><input type="checkbox" checked={mentorSel.selected.has(m.id)} onChange={() => mentorSel.toggleOne(m.id)} aria-label="Select mentor" /></td>
+                    <td className="p-3"><div className="font-medium">{p?.name || "Unknown"}</div><div className="text-[11px] text-muted-foreground truncate">{p?.email || m.user_id.slice(0, 8)}</div></td>
+                    <td className="p-3 text-muted-foreground">{(m.topics ?? []).join(", ") || "—"}</td>
+                    <td className="p-3">{m.capacity}</td>
+                    <td className="p-3">{m.available ? <span className="text-green-700">Yes</span> : <span className="text-muted-foreground">No</span>}</td>
+                    <td className="p-3 text-right"><Button size="sm" variant="ghost" onClick={() => setViewMentor(m)}><Eye className="w-4 h-4" /></Button></td>
+                  </tr>
+                );
+              })}
+              {mentors.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No mentors yet.</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold">Requests ({requests.length})</h3>
+          {reqSel.selected.size > 0 && (
+            <Button size="sm" variant="outline" onClick={() => bulkDelete("mentorship_requests", Array.from(reqSel.selected), () => { reqSel.clear(); load(); })}><Trash2 className="w-4 h-4 text-destructive" /> Delete {reqSel.selected.size}</Button>
+          )}
+        </div>
+        <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="p-3 w-8"><input type="checkbox" checked={reqSel.allSelected} onChange={reqSel.toggleAll} aria-label="Select all requests" /></th>
+                <th className="text-left p-3">Mentee</th><th className="text-left p-3">Mentor</th><th className="text-left p-3">Status</th><th className="text-left p-3">When</th><th className="text-right p-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((r) => (
+                <tr key={r.id} className={`border-t border-border/60 ${reqSel.selected.has(r.id) ? "bg-muted/40" : ""}`}>
+                  <td className="p-3"><input type="checkbox" checked={reqSel.selected.has(r.id)} onChange={() => reqSel.toggleOne(r.id)} aria-label="Select request" /></td>
+                  <td className="p-3 text-xs">{profiles[r.mentee_id]?.name || r.mentee_id.slice(0, 8)}</td>
+                  <td className="p-3 text-xs">{profiles[r.mentor_id]?.name || r.mentor_id.slice(0, 8)}</td>
+                  <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${r.status === "accepted" ? "bg-green-100 text-green-800" : r.status === "rejected" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{r.status}</span></td>
+                  <td className="p-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
+                  <td className="p-3 text-right">
+                    <div className="flex gap-1 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => setViewReq(r)}><Eye className="w-4 h-4" /></Button>
+                      {r.status === "pending" && <Button size="sm" variant="outline" onClick={() => setReqStatus(r.id, "accepted")}>Accept</Button>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {requests.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No requests yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <Dialog open={!!viewMentor} onOpenChange={(o) => !o && setViewMentor(null)}>
+        <DialogContent>
+          {viewMentor && (
+            <>
+              <DialogHeader><DialogTitle>Mentor profile</DialogTitle></DialogHeader>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <DetailRow label="Name" value={profiles[viewMentor.user_id]?.name || "Unknown"} />
+                <DetailRow label="Email" value={profiles[viewMentor.user_id]?.email || "—"} />
+                <DetailRow label="Capacity" value={viewMentor.capacity} />
+                <DetailRow label="Available" value={viewMentor.available ? "Yes" : "No"} />
+              </div>
+              {viewMentor.bio && <div className="mt-3"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Bio</Label><p className="mt-1 whitespace-pre-line text-sm">{viewMentor.bio}</p></div>}
+              <div className="mt-3"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Topics</Label><p className="mt-1 text-sm">{(viewMentor.topics ?? []).join(", ") || "—"}</p></div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewReq} onOpenChange={(o) => !o && setViewReq(null)}>
+        <DialogContent>
+          {viewReq && (
+            <>
+              <DialogHeader><DialogTitle>Mentorship request</DialogTitle></DialogHeader>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <DetailRow label="Mentee" value={profiles[viewReq.mentee_id]?.name || "Unknown"} />
+                <DetailRow label="Mentor" value={profiles[viewReq.mentor_id]?.name || "Unknown"} />
+                <DetailRow label="Status" value={viewReq.status} />
+                <DetailRow label="Created" value={new Date(viewReq.created_at).toLocaleString()} />
+              </div>
+              {viewReq.message && <div className="mt-3"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Message</Label><p className="mt-1 whitespace-pre-line text-sm">{viewReq.message}</p></div>}
+              <DialogFooter className="gap-2">
+                {viewReq.status === "pending" && <>
+                  <Button onClick={() => { setReqStatus(viewReq.id, "accepted"); setViewReq(null); }}>Accept</Button>
+                  <Button variant="outline" onClick={() => { setReqStatus(viewReq.id, "rejected"); setViewReq(null); }}>Reject</Button>
+                </>}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-// -------- Resources --------
+// -------- Resources (advanced: bulk select, view detail) --------
 const ResourcesTab = () => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<any | null>(null);
+  const [viewing, setViewing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
+  const sel = useBulkSelect(items);
 
   const load = async () => {
     const { data } = await supabase.from("resources").select("*").order("created_at", { ascending: false });
@@ -891,16 +1196,35 @@ const ResourcesTab = () => {
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
   return (
     <div className="space-y-4">
-      <Button onClick={() => setEditing({})}><Plus className="w-4 h-4" /> New resource</Button>
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <Button onClick={() => setEditing({})}><Plus className="w-4 h-4" /> New resource</Button>
+        <div className="flex gap-2 items-center">
+          {sel.selected.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">{sel.selected.size} selected</span>
+              <Button size="sm" variant="outline" onClick={() => bulkDelete("resources", Array.from(sel.selected), () => { sel.clear(); load(); })}><Trash2 className="w-4 h-4 text-destructive" /> Delete selected</Button>
+            </>
+          )}
+          <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-resources-${Date.now()}`, items as any)}><Download className="w-4 h-4" /> Export ({items.length})</Button>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 px-2">
+        <input type="checkbox" checked={sel.allSelected} onChange={sel.toggleAll} aria-label="Select all resources" />
+        <span className="text-xs text-muted-foreground">Select all</span>
+      </div>
       <div className="grid gap-3">
         {items.map((r) => (
-          <div key={r.id} className="rounded-2xl bg-card border border-border/60 p-5 flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap"><span className="font-display font-semibold text-primary">{r.title}</span>{r.category && <span className="px-2 py-0.5 rounded-full text-[11px] bg-muted">{r.category}</span>}</div>
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>
-              <div className="text-xs text-muted-foreground mt-1 flex gap-3">{r.file_url && <a href={r.file_url} target="_blank" rel="noreferrer" className="underline">File</a>}{r.external_url && <a href={r.external_url} target="_blank" rel="noreferrer" className="underline">Link</a>}</div>
+          <div key={r.id} className={`rounded-2xl bg-card border border-border/60 p-5 flex flex-col md:flex-row md:items-start md:justify-between gap-3 ${sel.selected.has(r.id) ? "ring-2 ring-primary/40" : ""}`}>
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              <input type="checkbox" className="mt-1.5" checked={sel.selected.has(r.id)} onChange={() => sel.toggleOne(r.id)} aria-label={`Select ${r.title}`} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap"><span className="font-display font-semibold text-primary">{r.title}</span>{r.category && <span className="px-2 py-0.5 rounded-full text-[11px] bg-muted">{r.category}</span>}</div>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>
+                <div className="text-xs text-muted-foreground mt-1 flex gap-3">{r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" className="underline">File</a>}{r.external_url && <a href={r.external_url} target="_blank" rel="noopener noreferrer" className="underline">Link</a>}</div>
+              </div>
             </div>
             <div className="flex gap-1 flex-shrink-0">
+              <Button size="sm" variant="ghost" onClick={() => setViewing(r)}><Eye className="w-4 h-4" /></Button>
               <Button size="sm" variant="ghost" onClick={() => setEditing(r)}><Pencil className="w-4 h-4" /></Button>
               <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
             </div>
@@ -920,12 +1244,33 @@ const ResourcesTab = () => {
               <div>
                 <Label>Upload file (optional)</Label>
                 <Input type="file" disabled={uploading} onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const url = await upload(f); if (url) setEditing({ ...editing, file_url: url }); } }} />
-                {editing.file_url && <a href={editing.file_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline mt-1 inline-block">View uploaded file</a>}
+                {editing.file_url && <a href={editing.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline mt-1 inline-block">View uploaded file</a>}
               </div>
               <div><Label>External URL (optional)</Label><Input value={editing.external_url ?? ""} onChange={(e) => setEditing({ ...editing, external_url: e.target.value })} placeholder="https://..." /></div>
             </div>
           )}
           <DialogFooter><Button onClick={save} disabled={uploading}>{uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent>
+          {viewing && (
+            <>
+              <DialogHeader><DialogTitle>{viewing.title}</DialogTitle></DialogHeader>
+              <div className="space-y-3 text-sm">
+                <DetailRow label="Category" value={viewing.category || "—"} />
+                <DetailRow label="Created" value={new Date(viewing.created_at).toLocaleString()} />
+                {viewing.description && <div><Label className="text-xs uppercase tracking-wider text-muted-foreground">Description</Label><p className="mt-1 whitespace-pre-line">{viewing.description}</p></div>}
+                {viewing.file_url && <div><a href={viewing.file_url} target="_blank" rel="noopener noreferrer" className="text-primary underline">Download file →</a></div>}
+                {viewing.external_url && <div><a href={viewing.external_url} target="_blank" rel="noopener noreferrer" className="text-primary underline">Open link →</a></div>}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setEditing(viewing); setViewing(null); }}><Pencil className="w-4 h-4" /> Edit</Button>
+                <Button variant="outline" onClick={() => { remove(viewing.id); setViewing(null); }}><Trash2 className="w-4 h-4 text-destructive" /> Delete</Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
