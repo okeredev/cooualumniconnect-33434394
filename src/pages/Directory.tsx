@@ -36,7 +36,7 @@ type Employment = { user_id: string; company: string; title: string | null; star
 type Education = { user_id: string; school: string; degree: string | null; field: string | null; start_year: number | null; end_year: number | null };
 
 const DirectoryPage = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [employmentMap, setEmploymentMap] = useState<Record<string, Employment[]>>({});
   const [educationMap, setEducationMap] = useState<Record<string, Education[]>>({});
