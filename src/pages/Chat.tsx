@@ -16,6 +16,7 @@ type ActiveTarget = { kind: "channel"; id: string; label: string } | { kind: "dm
 
 const ChatPage = () => {
   const { user } = useAuth();
+  const { online } = usePresence();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [members, setMembers] = useState<Set<string>>(new Set());
   const [people, setPeople] = useState<ProfileMini[]>([]);
