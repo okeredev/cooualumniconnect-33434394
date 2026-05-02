@@ -119,13 +119,22 @@ const ChatPage = () => {
               <div className="overflow-y-auto">
                 <div className="p-2"><Input placeholder="Search alumni..." value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="p-2 space-y-1">
-                  {filteredPeople.map((p) => (
-                    <button key={p.user_id} onClick={() => setActive({ kind: "dm", id: p.user_id, label: p.display_name || "Alumnus" })}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-muted flex items-center gap-2 ${active?.kind === "dm" && active.id === p.user_id ? "bg-muted font-semibold" : ""}`}>
-                      {p.avatar_url ? <img src={p.avatar_url} className="w-6 h-6 rounded-full object-cover" alt="" /> : <div className="w-6 h-6 rounded-full bg-muted grid place-items-center text-[10px]">{(p.display_name || "A")[0]}</div>}
-                      <span className="truncate">{p.display_name || "Alumnus"}</span>
-                    </button>
-                  ))}
+                  {filteredPeople.map((p) => {
+                    const isOnline = online.has(p.user_id);
+                    return (
+                      <button key={p.user_id} onClick={() => setActive({ kind: "dm", id: p.user_id, label: p.display_name || "Alumnus" })}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-muted flex items-center gap-2 ${active?.kind === "dm" && active.id === p.user_id ? "bg-muted font-semibold" : ""}`}>
+                        <div className="relative flex-shrink-0">
+                          {p.avatar_url ? <img src={p.avatar_url} className="w-7 h-7 rounded-full object-cover" alt="" /> : <div className="w-7 h-7 rounded-full bg-muted grid place-items-center text-[11px]">{(p.display_name || "A")[0]}</div>}
+                          <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card ${isOnline ? "bg-green-500" : "bg-red-400"}`} aria-label={isOnline ? "Online" : "Offline"} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate">{p.display_name || "Alumnus"}</div>
+                          <div className="text-[10px] text-muted-foreground truncate">{isOnline ? "Online" : formatLastSeen(p.last_seen_at)}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
