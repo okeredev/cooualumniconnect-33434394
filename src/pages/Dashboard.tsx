@@ -40,10 +40,11 @@ type Profile = {
   graduation_year: number | null;
   department: string | null;
   verified: boolean;
+  hide_phone: boolean;
 };
 
-type Education = { id: string; school: string; degree: string | null; field: string | null; start_year: number | null; end_year: number | null };
-type Employment = { id: string; company: string; title: string | null; start_date: string | null; end_date: string | null; current: boolean; description: string | null };
+type Education = { id: string; school: string; degree: string | null; field: string | null; start_year: number | null; end_year: number | null; _isNew?: boolean; _dirty?: boolean };
+type Employment = { id: string; company: string; title: string | null; start_date: string | null; end_date: string | null; current: boolean; description: string | null; _isNew?: boolean; _dirty?: boolean };
 
 const profileSchema = z.object({
   display_name: z.string().trim().min(2).max(80),
@@ -114,6 +115,7 @@ const DashboardPage = () => {
       website: profile.website,
       graduation_year: profile.graduation_year,
       department: profile.department,
+      hide_phone: profile.hide_phone,
     }).eq("user_id", user.id);
     setSaving(false);
     if (error) toast.error(error.message);
@@ -135,43 +137,133 @@ const DashboardPage = () => {
     else { updateProfile({ avatar_url: publicUrl }); toast.success("Avatar updated"); }
   };
 
-  const addEducation = async () => {
-    if (!user) return;
-    const { data, error } = await supabase.from("education").insert({
-      user_id: user.id, school: "New school", degree: "", field: "", start_year: new Date().getFullYear() - 4, end_year: new Date().getFullYear(),
-    }).select().single();
-    if (error) toast.error(error.message);
-    else setEducation([data as Education, ...education]);
+  // --- Education: local draft + explicit save per row ---
+  const addEducation = () => {
+    if (education.some((e) => e._isNew)) {
+      toast.error("Save the current education entry first");
+      return;
+    }
+    const draft: Education = {
+      id: `tmp-${Date.now()}`,
+      school: "",
+      degree: "",
+      field: "",
+      start_year: null,
+      end_year: null,
+      _isNew: true,
+      _dirty: true,
+    };
+    setEducation([draft, ...education]);
   };
 
-  const updateEducation = async (id: string, patch: Partial<Education>) => {
-    setEducation(education.map((e) => e.id === id ? { ...e, ...patch } : e));
-    await supabase.from("education").update(patch).eq("id", id);
+  const patchEducation = (id: string, patch: Partial<Education>) => {
+    setEducation(education.map((e) => e.id === id ? { ...e, ...patch, _dirty: true } : e));
+  };
+
+  const saveEducation = async (id: string) => {
+    if (!user) return;
+    const row = education.find((e) => e.id === id);
+    if (!row) return;
+    if (!row.school.trim()) { toast.error("School is required"); return; }
+    if (row._isNew) {
+      const { data, error } = await supabase.from("education").insert({
+        user_id: user.id,
+        school: row.school,
+        degree: row.degree,
+        field: row.field,
+        start_year: row.start_year,
+        end_year: row.end_year,
+      }).select().single();
+      if (error) return toast.error(error.message);
+      setEducation(education.map((e) => e.id === id ? { ...(data as Education) } : e));
+      toast.success("Education saved");
+    } else {
+      const { error } = await supabase.from("education").update({
+        school: row.school, degree: row.degree, field: row.field, start_year: row.start_year, end_year: row.end_year,
+      }).eq("id", id);
+      if (error) return toast.error(error.message);
+      setEducation(education.map((e) => e.id === id ? { ...e, _dirty: false } : e));
+      toast.success("Education updated");
+    }
   };
 
   const deleteEducation = async (id: string) => {
+    const row = education.find((e) => e.id === id);
+    if (row?._isNew) {
+      setEducation(education.filter((e) => e.id !== id));
+      return;
+    }
+    if (!confirm("Delete this education entry?")) return;
     await supabase.from("education").delete().eq("id", id);
     setEducation(education.filter((e) => e.id !== id));
+    toast.success("Removed");
   };
 
-  const addEmployment = async () => {
+  // --- Employment: local draft + explicit save per row ---
+  const addEmployment = () => {
+    if (employment.some((e) => e._isNew)) {
+      toast.error("Save the current employment entry first");
+      return;
+    }
+    const draft: Employment = {
+      id: `tmp-${Date.now()}`,
+      company: "",
+      title: "",
+      start_date: null,
+      end_date: null,
+      current: true,
+      description: "",
+      _isNew: true,
+      _dirty: true,
+    };
+    setEmployment([draft, ...employment]);
+  };
+
+  const patchEmployment = (id: string, patch: Partial<Employment>) => {
+    setEmployment(employment.map((e) => e.id === id ? { ...e, ...patch, _dirty: true } : e));
+  };
+
+  const saveEmployment = async (id: string) => {
     if (!user) return;
-    const { data, error } = await supabase.from("employment").insert({
-      user_id: user.id, company: "New company", title: "", current: true,
-    }).select().single();
-    if (error) toast.error(error.message);
-    else setEmployment([data as Employment, ...employment]);
-  };
-
-  const updateEmployment = async (id: string, patch: Partial<Employment>) => {
-    setEmployment(employment.map((e) => e.id === id ? { ...e, ...patch } : e));
-    await supabase.from("employment").update(patch).eq("id", id);
+    const row = employment.find((e) => e.id === id);
+    if (!row) return;
+    if (!row.company.trim()) { toast.error("Company is required"); return; }
+    if (row._isNew) {
+      const { data, error } = await supabase.from("employment").insert({
+        user_id: user.id,
+        company: row.company,
+        title: row.title,
+        start_date: row.start_date,
+        end_date: row.current ? null : row.end_date,
+        current: row.current,
+        description: row.description,
+      }).select().single();
+      if (error) return toast.error(error.message);
+      setEmployment(employment.map((e) => e.id === id ? { ...(data as Employment) } : e));
+      toast.success("Experience saved");
+    } else {
+      const { error } = await supabase.from("employment").update({
+        company: row.company, title: row.title, start_date: row.start_date,
+        end_date: row.current ? null : row.end_date, current: row.current, description: row.description,
+      }).eq("id", id);
+      if (error) return toast.error(error.message);
+      setEmployment(employment.map((e) => e.id === id ? { ...e, _dirty: false } : e));
+      toast.success("Experience updated");
+    }
   };
 
   const deleteEmployment = async (id: string) => {
+    const row = employment.find((e) => e.id === id);
+    if (row?._isNew) {
+      setEmployment(employment.filter((e) => e.id !== id));
+      return;
+    }
+    if (!confirm("Delete this experience entry?")) return;
     await supabase.from("employment").delete().eq("id", id);
     setEmployment(employment.filter((e) => e.id !== id));
+    toast.success("Removed");
   };
+
 
   if (loading || !profile) {
     return <AppShell><div className="container py-20 text-center text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div></AppShell>;
@@ -256,6 +348,16 @@ const DashboardPage = () => {
               <Field label="Bio">
                 <Textarea rows={3} value={profile.bio ?? ""} onChange={(e) => updateProfile({ bio: e.target.value })} maxLength={500} placeholder="Tell the network about yourself..." />
               </Field>
+              <div className="rounded-xl border border-border/60 p-4 flex items-start justify-between gap-3 bg-muted/30">
+                <div>
+                  <div className="font-medium text-sm">Hide my phone number from the directory</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Other alumni won't see your phone or WhatsApp on your public profile. Admins always see it.</div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input type="checkbox" className="sr-only peer" checked={!!profile.hide_phone} onChange={(e) => updateProfile({ hide_phone: e.target.checked })} />
+                  <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-primary/40 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-card after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+                </label>
+              </div>
               <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-border/60">
                 <Field label="LinkedIn"><Input value={profile.linkedin ?? ""} onChange={(e) => updateProfile({ linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." /></Field>
                 <Field label="GitHub"><Input value={profile.github ?? ""} onChange={(e) => updateProfile({ github: e.target.value })} placeholder="https://github.com/..." /></Field>
@@ -268,14 +370,24 @@ const DashboardPage = () => {
           <TabsContent value="education" className="mt-6 space-y-3">
             <Button variant="outline" onClick={addEducation}><Plus className="w-4 h-4" /> Add education</Button>
             {education.map((e) => (
-              <div key={e.id} className="rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-2 gap-3">
-                <Input value={e.school} onChange={(ev) => updateEducation(e.id, { school: ev.target.value })} placeholder="School" />
-                <Input value={e.degree ?? ""} onChange={(ev) => updateEducation(e.id, { degree: ev.target.value })} placeholder="Degree (e.g. B.Sc.)" />
-                <Input value={e.field ?? ""} onChange={(ev) => updateEducation(e.id, { field: ev.target.value })} placeholder="Field of study" />
-                <div className="flex gap-2">
-                  <Input type="number" value={e.start_year ?? ""} onChange={(ev) => updateEducation(e.id, { start_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="Start" />
-                  <Input type="number" value={e.end_year ?? ""} onChange={(ev) => updateEducation(e.id, { end_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="End" />
-                  <Button variant="ghost" size="icon" onClick={() => deleteEducation(e.id)} aria-label="Delete"><Trash2 className="w-4 h-4 text-destructive" /></Button>
+              <div key={e.id} className="rounded-2xl bg-card border border-border/60 p-5 space-y-3">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <Input value={e.school} onChange={(ev) => patchEducation(e.id, { school: ev.target.value })} placeholder="School *" />
+                  <Input value={e.degree ?? ""} onChange={(ev) => patchEducation(e.id, { degree: ev.target.value })} placeholder="Degree (e.g. B.Sc.)" />
+                  <Input value={e.field ?? ""} onChange={(ev) => patchEducation(e.id, { field: ev.target.value })} placeholder="Field of study" />
+                  <div className="flex gap-2">
+                    <Input type="number" value={e.start_year ?? ""} onChange={(ev) => patchEducation(e.id, { start_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="Start year" />
+                    <Input type="number" value={e.end_year ?? ""} onChange={(ev) => patchEducation(e.id, { end_year: ev.target.value ? Number(ev.target.value) : null })} placeholder="End year" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
+                  <div className="text-xs text-muted-foreground">
+                    {e._isNew ? "New entry — not yet saved" : e._dirty ? "Unsaved changes" : "Saved"}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => deleteEducation(e.id)}><Trash2 className="w-4 h-4 text-destructive" /> {e._isNew ? "Cancel" : "Delete"}</Button>
+                    <Button size="sm" variant="hero" onClick={() => saveEducation(e.id)} disabled={!e._dirty}><Check className="w-4 h-4" /> Save</Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -287,19 +399,27 @@ const DashboardPage = () => {
             {employment.map((w) => (
               <div key={w.id} className="rounded-2xl bg-card border border-border/60 p-5 space-y-3">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <Input value={w.company} onChange={(ev) => updateEmployment(w.id, { company: ev.target.value })} placeholder="Company" />
-                  <Input value={w.title ?? ""} onChange={(ev) => updateEmployment(w.id, { title: ev.target.value })} placeholder="Title" />
-                  <Input type="date" value={w.start_date ?? ""} onChange={(ev) => updateEmployment(w.id, { start_date: ev.target.value })} />
+                  <Input value={w.company} onChange={(ev) => patchEmployment(w.id, { company: ev.target.value })} placeholder="Company *" />
+                  <Input value={w.title ?? ""} onChange={(ev) => patchEmployment(w.id, { title: ev.target.value })} placeholder="Title" />
+                  <Input type="date" value={w.start_date ?? ""} onChange={(ev) => patchEmployment(w.id, { start_date: ev.target.value })} />
                   <div className="flex gap-2 items-center">
-                    <Input type="date" value={w.end_date ?? ""} onChange={(ev) => updateEmployment(w.id, { end_date: ev.target.value })} disabled={w.current} />
+                    <Input type="date" value={w.end_date ?? ""} onChange={(ev) => patchEmployment(w.id, { end_date: ev.target.value })} disabled={w.current} />
                     <label className="flex items-center gap-1.5 text-sm whitespace-nowrap">
-                      <input type="checkbox" checked={w.current} onChange={(ev) => updateEmployment(w.id, { current: ev.target.checked, end_date: ev.target.checked ? null : w.end_date })} />
+                      <input type="checkbox" checked={w.current} onChange={(ev) => patchEmployment(w.id, { current: ev.target.checked, end_date: ev.target.checked ? null : w.end_date })} />
                       Current
                     </label>
                   </div>
                 </div>
-                <Textarea rows={2} value={w.description ?? ""} onChange={(ev) => updateEmployment(w.id, { description: ev.target.value })} placeholder="What did you do?" maxLength={500} />
-                <Button variant="ghost" size="sm" onClick={() => deleteEmployment(w.id)}><Trash2 className="w-4 h-4 text-destructive" /> Remove</Button>
+                <Textarea rows={2} value={w.description ?? ""} onChange={(ev) => patchEmployment(w.id, { description: ev.target.value })} placeholder="What did you do?" maxLength={500} />
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
+                  <div className="text-xs text-muted-foreground">
+                    {w._isNew ? "New entry — not yet saved" : w._dirty ? "Unsaved changes" : "Saved"}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => deleteEmployment(w.id)}><Trash2 className="w-4 h-4 text-destructive" /> {w._isNew ? "Cancel" : "Delete"}</Button>
+                    <Button size="sm" variant="hero" onClick={() => saveEmployment(w.id)} disabled={!w._dirty}><Check className="w-4 h-4" /> Save</Button>
+                  </div>
+                </div>
               </div>
             ))}
             {employment.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No experience added yet.</p>}

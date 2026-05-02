@@ -470,7 +470,9 @@ export type Database = {
           email: string | null
           github: string | null
           graduation_year: number | null
+          hide_phone: boolean
           id: string
+          last_seen_at: string | null
           linkedin: string | null
           phone: string | null
           state: string | null
@@ -494,7 +496,9 @@ export type Database = {
           email?: string | null
           github?: string | null
           graduation_year?: number | null
+          hide_phone?: boolean
           id?: string
+          last_seen_at?: string | null
           linkedin?: string | null
           phone?: string | null
           state?: string | null
@@ -518,7 +522,9 @@ export type Database = {
           email?: string | null
           github?: string | null
           graduation_year?: number | null
+          hide_phone?: boolean
           id?: string
+          last_seen_at?: string | null
           linkedin?: string | null
           phone?: string | null
           state?: string | null

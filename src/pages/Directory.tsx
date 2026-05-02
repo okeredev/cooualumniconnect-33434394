@@ -29,13 +29,14 @@ type Profile = {
   website: string | null;
   phone: string | null;
   whatsapp: string | null;
+  hide_phone: boolean;
 };
 
 type Employment = { user_id: string; company: string; title: string | null; start_date: string | null; end_date: string | null; current: boolean; description: string | null };
 type Education = { user_id: string; school: string; degree: string | null; field: string | null; start_year: number | null; end_year: number | null };
 
 const DirectoryPage = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [employmentMap, setEmploymentMap] = useState<Record<string, Employment[]>>({});
   const [educationMap, setEducationMap] = useState<Record<string, Education[]>>({});
@@ -53,7 +54,7 @@ const DirectoryPage = () => {
       const [{ data: ps }, { data: emps }, { data: edus }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("user_id, display_name, avatar_url, bio, email, city, state, country, department, graduation_year, verified, linkedin, github, twitter, website, phone, whatsapp")
+          .select("user_id, display_name, avatar_url, bio, email, city, state, country, department, graduation_year, verified, linkedin, github, twitter, website, phone, whatsapp, hide_phone")
           .eq("suspended", false)
           .order("created_at", { ascending: false }),
         supabase.from("employment").select("user_id, company, title, start_date, end_date, current, description").order("current", { ascending: false }),
@@ -245,8 +246,8 @@ const DirectoryPage = () => {
                   <h4 className="font-display font-semibold text-primary mb-2">Contact & Social</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     {active.email && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary truncate" href={`mailto:${active.email}`}><Mail className="w-4 h-4 flex-shrink-0" /><span className="truncate">{active.email}</span></a>}
-                    {active.phone && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={`tel:${active.phone}`}><Phone className="w-4 h-4 flex-shrink-0" />{active.phone}</a>}
-                    {active.whatsapp && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={`https://wa.me/${active.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle className="w-4 h-4 flex-shrink-0" />WhatsApp</a>}
+                    {active.phone && (!active.hide_phone || isAdmin || user?.id === active.user_id) && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={`tel:${active.phone}`}><Phone className="w-4 h-4 flex-shrink-0" />{active.phone}{active.hide_phone && <span className="text-[10px] uppercase tracking-wider text-gold ml-1">(hidden)</span>}</a>}
+                    {active.whatsapp && (!active.hide_phone || isAdmin || user?.id === active.user_id) && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={`https://wa.me/${active.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle className="w-4 h-4 flex-shrink-0" />WhatsApp</a>}
                     {active.linkedin && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={active.linkedin} target="_blank" rel="noreferrer"><Linkedin className="w-4 h-4 flex-shrink-0" />LinkedIn</a>}
                     {active.github && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={active.github} target="_blank" rel="noreferrer"><Github className="w-4 h-4 flex-shrink-0" />GitHub</a>}
                     {active.twitter && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={active.twitter} target="_blank" rel="noreferrer"><Twitter className="w-4 h-4 flex-shrink-0" />X / Twitter</a>}
