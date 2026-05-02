@@ -545,14 +545,27 @@ const UsersTab = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <DetailRow label="Department" value={detail.department} />
                   <DetailRow label="Graduation year" value={detail.graduation_year} />
+                  <DetailRow label="Date of birth" value={detail.date_of_birth ? new Date(detail.date_of_birth).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "—"} />
                   <DetailRow label="Phone" value={detail.phone || "—"} />
                   <DetailRow label="WhatsApp" value={detail.whatsapp || "—"} />
                   <DetailRow label="City" value={detail.city || "—"} />
                   <DetailRow label="State" value={detail.state || "—"} />
                   <DetailRow label="Country" value={detail.country || "—"} />
+                  <DetailRow label="Permanent address" value={detail.address || "—"} />
+                  <DetailRow label="Current address" value={detail.current_address || "—"} />
                   <DetailRow label="Hide phone" value={detail.hide_phone ? "Yes" : "No"} />
                   <DetailRow label="Last seen" value={detail.last_seen_at ? new Date(detail.last_seen_at).toLocaleString() : "Never"} />
                   <DetailRow label="Joined" value={new Date(detail.created_at).toLocaleString()} />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Certificate / Statement of Result</Label>
+                  {detail.certificate_url ? (
+                    <a href={detail.certificate_url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                      <ExternalLink className="w-3.5 h-3.5" /> View uploaded certificate
+                    </a>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">Not uploaded</p>
+                  )}
                 </div>
                 {detail.bio && (
                   <div>
