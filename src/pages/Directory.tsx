@@ -53,8 +53,11 @@ const DirectoryPage = () => {
     document.title = "Alumni Directory — COOU Alumni Connect";
     (async () => {
       const [{ data: ps }, { data: emps }, { data: edus }] = await Promise.all([
-        supabase
-          .from("profiles")
+        // Use the privacy-aware view: phone & whatsapp are masked server-side
+        // when the profile owner has hide_phone enabled and the viewer is not
+        // the owner or an admin.
+        (supabase as any)
+          .from("profiles_public")
           .select("user_id, display_name, avatar_url, bio, email, city, state, country, department, graduation_year, verified, linkedin, github, twitter, website, phone, whatsapp, hide_phone")
           .eq("suspended", false)
           .order("created_at", { ascending: false }),

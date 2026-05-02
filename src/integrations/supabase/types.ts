@@ -597,7 +597,87 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          bio: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          department: string | null
+          display_name: string | null
+          email: string | null
+          github: string | null
+          graduation_year: number | null
+          hide_phone: boolean | null
+          id: string | null
+          last_seen_at: string | null
+          linkedin: string | null
+          phone: string | null
+          state: string | null
+          suspended: boolean | null
+          twitter: string | null
+          updated_at: string | null
+          user_id: string | null
+          verified: boolean | null
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          github?: string | null
+          graduation_year?: number | null
+          hide_phone?: boolean | null
+          id?: string | null
+          last_seen_at?: string | null
+          linkedin?: string | null
+          phone?: never
+          state?: string | null
+          suspended?: boolean | null
+          twitter?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+          website?: string | null
+          whatsapp?: never
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          github?: string | null
+          graduation_year?: number | null
+          hide_phone?: boolean | null
+          id?: string | null
+          last_seen_at?: string | null
+          linkedin?: string | null
+          phone?: never
+          state?: string | null
+          suspended?: boolean | null
+          twitter?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+          website?: string | null
+          whatsapp?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
