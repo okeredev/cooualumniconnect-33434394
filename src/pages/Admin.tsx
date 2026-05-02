@@ -212,12 +212,25 @@ const ModerationTab = () => {
   );
 };
 
-// -------- Users --------
+// -------- Users (advanced: bulk select, password reset, delete, drill-down) --------
+type FullProfile = ProfileRow & {
+  bio: string | null; phone: string | null; whatsapp: string | null; city: string | null; state: string | null;
+  country: string | null; address: string | null; linkedin: string | null; github: string | null; twitter: string | null;
+  website: string | null; hide_phone: boolean; last_seen_at: string | null;
+};
+
 const UsersTab = () => {
-  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [profiles, setProfiles] = useState<FullProfile[]>([]);
   const [roles, setRoles] = useState<Record<string, Role[]>>({});
+  const [counts, setCounts] = useState<Record<string, { jobs: number; donations: number; events: number }>>({});
   const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<"all" | "verified" | "suspended" | "admins">("all");
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [resetTarget, setResetTarget] = useState<FullProfile | null>(null);
+  const [newPwd, setNewPwd] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [detail, setDetail] = useState<FullProfile | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -225,54 +238,136 @@ const UsersTab = () => {
     const { data: rs } = await supabase.from("user_roles").select("user_id, role");
     const map: Record<string, Role[]> = {};
     (rs ?? []).forEach((r: any) => { (map[r.user_id] ??= []).push(r.role); });
-    setProfiles((ps ?? []) as ProfileRow[]);
+    setProfiles((ps ?? []) as FullProfile[]);
     setRoles(map);
+    setSelected(new Set());
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
-  const toggleVerify = async (p: ProfileRow) => {
-    await supabase.from("profiles").update({ verified: !p.verified }).eq("user_id", p.user_id);
-    toast.success(p.verified ? "Unverified" : "Verified");
-    load();
+  const loadCountsFor = async (userId: string) => {
+    if (counts[userId]) return;
+    const [j, d, e] = await Promise.all([
+      supabase.from("applications").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("donations").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("event_rsvps").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    ]);
+    setCounts((c) => ({ ...c, [userId]: { jobs: j.count ?? 0, donations: d.count ?? 0, events: e.count ?? 0 } }));
   };
-  const toggleSuspend = async (p: ProfileRow) => {
+
+  const toggleVerify = async (p: FullProfile) => {
+    await supabase.from("profiles").update({ verified: !p.verified }).eq("user_id", p.user_id);
+    toast.success(p.verified ? "Unverified" : "Verified"); load();
+  };
+  const toggleSuspend = async (p: FullProfile) => {
     await supabase.from("profiles").update({ suspended: !p.suspended }).eq("user_id", p.user_id);
-    toast.success(p.suspended ? "Reinstated" : "Suspended");
-    load();
+    toast.success(p.suspended ? "Reinstated" : "Suspended"); load();
   };
   const setRole = async (userId: string, role: Role, has: boolean) => {
     if (has) await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
     else await supabase.from("user_roles").insert({ user_id: userId, role });
-    toast.success("Role updated");
-    load();
+    toast.success("Role updated"); load();
   };
 
-  const filtered = profiles.filter((p) =>
-    !q || (p.display_name + " " + p.email).toLowerCase().includes(q.toLowerCase())
-  );
+  const submitReset = async () => {
+    if (!resetTarget || newPwd.length < 8) { toast.error("Password must be 8+ characters"); return; }
+    setResetting(true);
+    const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+      body: { user_id: resetTarget.user_id, new_password: newPwd },
+    });
+    setResetting(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Reset failed");
+    } else {
+      toast.success(`Password reset for ${resetTarget.display_name || resetTarget.email}`);
+      setResetTarget(null); setNewPwd("");
+    }
+  };
+
+  const deleteUsers = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    if (!confirm(`Permanently delete ${ids.length} user${ids.length > 1 ? "s" : ""}? This cannot be undone.`)) return;
+    const { data, error } = await supabase.functions.invoke("admin-delete-users", { body: { user_ids: ids } });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Delete failed");
+    } else {
+      const failed = ((data as any)?.results ?? []).filter((r: any) => !r.ok);
+      if (failed.length) toast.error(`${failed.length} failed`);
+      else toast.success(`Deleted ${ids.length} user${ids.length > 1 ? "s" : ""}`);
+      load();
+    }
+  };
+
+  const filtered = profiles.filter((p) => {
+    if (q && !((p.display_name || "") + " " + (p.email || "")).toLowerCase().includes(q.toLowerCase())) return false;
+    if (filter === "verified" && !p.verified) return false;
+    if (filter === "suspended" && !p.suspended) return false;
+    if (filter === "admins" && !(roles[p.user_id] ?? []).includes("admin")) return false;
+    return true;
+  });
+
+  const allSelected = filtered.length > 0 && filtered.every((p) => selected.has(p.user_id));
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(filtered.map((p) => p.user_id)));
+  };
+  const toggleOne = (id: string) => {
+    const s = new Set(selected);
+    if (s.has(id)) s.delete(id); else s.add(id);
+    setSelected(s);
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 items-center justify-between">
-        <Input placeholder="Search users..." value={q} onChange={(e) => setQ(e.target.value)} className="max-w-md" aria-label="Search users" />
-        <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-users-filtered-${Date.now()}`, filtered as any)} aria-label="Export filtered users CSV"><Download className="w-4 h-4" /> Export ({filtered.length})</Button>
+        <div className="flex flex-wrap gap-2 items-center">
+          <Input placeholder="Search users..." value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" aria-label="Search users" />
+          <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={filter} onChange={(e) => setFilter(e.target.value as any)} aria-label="Filter users">
+            <option value="all">All ({profiles.length})</option>
+            <option value="verified">Verified</option>
+            <option value="suspended">Suspended</option>
+            <option value="admins">Admins</option>
+          </select>
+        </div>
+        <div className="flex gap-2 items-center">
+          {selected.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+              <Button size="sm" variant="outline" onClick={() => deleteUsers(Array.from(selected))}><Trash2 className="w-4 h-4 text-destructive" /> Delete selected</Button>
+            </>
+          )}
+          <Button size="sm" variant="outline" onClick={() => downloadCsv(`coou-users-filtered-${Date.now()}`, filtered as any)}><Download className="w-4 h-4" /> Export ({filtered.length})</Button>
+        </div>
       </div>
       <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
-            <tr><th className="text-left p-3">User</th><th className="text-left p-3">Roles</th><th className="text-left p-3">Status</th><th className="text-right p-3">Actions</th></tr>
+            <tr>
+              <th className="p-3 w-8"><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all" /></th>
+              <th className="text-left p-3">User</th>
+              <th className="text-left p-3">Roles</th>
+              <th className="text-left p-3">Status</th>
+              <th className="text-left p-3">Joined</th>
+              <th className="text-right p-3">Actions</th>
+            </tr>
           </thead>
           <tbody>
             {filtered.map((p) => {
               const r = roles[p.user_id] ?? [];
+              const isSel = selected.has(p.user_id);
               return (
-                <tr key={p.user_id} className="border-t border-border/60">
+                <tr key={p.user_id} className={`border-t border-border/60 ${isSel ? "bg-muted/40" : ""}`}>
+                  <td className="p-3"><input type="checkbox" checked={isSel} onChange={() => toggleOne(p.user_id)} aria-label={`Select ${p.display_name || p.email}`} /></td>
                   <td className="p-3">
-                    <div className="font-medium">{p.display_name || "—"}</div>
-                    <div className="text-xs text-muted-foreground">{p.email}</div>
+                    <div className="flex items-center gap-2">
+                      {p.avatar_url ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" /> : <div className="w-8 h-8 rounded-full bg-muted grid place-items-center text-xs">{(p.display_name || p.email || "?")[0]}</div>}
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{p.display_name || "—"}</div>
+                        <div className="text-xs text-muted-foreground truncate">{p.email}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="p-3">
                     <div className="flex gap-1.5 flex-wrap">
@@ -288,31 +383,122 @@ const UsersTab = () => {
                     </div>
                   </td>
                   <td className="p-3">
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
                       {p.verified && <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">Verified</span>}
                       {p.suspended && <span className="px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-800">Suspended</span>}
+                      {!p.verified && !p.suspended && <span className="text-xs text-muted-foreground">Active</span>}
                     </div>
                   </td>
+                  <td className="p-3 text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</td>
                   <td className="p-3 text-right">
-                    <div className="flex gap-1 justify-end">
+                    <div className="flex gap-1 justify-end flex-wrap">
+                      <Button size="sm" variant="ghost" onClick={() => { setDetail(p); loadCountsFor(p.user_id); }} title="View details"><Eye className="w-4 h-4" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => toggleVerify(p)} title={p.verified ? "Unverify" : "Verify"}>
                         <BadgeCheck className={`w-4 h-4 ${p.verified ? "text-green-600" : ""}`} />
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => toggleSuspend(p)} title={p.suspended ? "Reinstate" : "Suspend"}>
                         {p.suspended ? <ShieldOff className="w-4 h-4 text-red-600" /> : <Ban className="w-4 h-4" />}
                       </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setResetTarget(p); setNewPwd(""); }} title="Reset password">
+                        <KeyRound className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => deleteUsers([p.user_id])} title="Delete user">
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
                     </div>
                   </td>
                 </tr>
               );
             })}
-            {filtered.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No users found</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No users found</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {/* Reset password dialog */}
+      <Dialog open={!!resetTarget} onOpenChange={(o) => { if (!o) { setResetTarget(null); setNewPwd(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reset password — {resetTarget?.display_name || resetTarget?.email}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">Set a new password for this user. They'll be able to sign in immediately with the new password.</p>
+            <div>
+              <Label>New password (min 8 chars)</Label>
+              <Input type="text" autoFocus value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="e.g. Welcome2026!" maxLength={200} className="mt-1.5" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setResetTarget(null); setNewPwd(""); }}>Cancel</Button>
+            <Button onClick={submitReset} disabled={resetting || newPwd.length < 8}>
+              {resetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />} Reset password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User detail dialog */}
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {detail && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  {detail.avatar_url ? <img src={detail.avatar_url} className="w-12 h-12 rounded-full object-cover" alt="" /> : <div className="w-12 h-12 rounded-full bg-muted grid place-items-center">{(detail.display_name || "?")[0]}</div>}
+                  <div className="min-w-0">
+                    <div className="truncate">{detail.display_name || "Unnamed"}</div>
+                    <div className="text-xs text-muted-foreground font-normal truncate">{detail.email}</div>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <DetailRow label="Department" value={detail.department} />
+                  <DetailRow label="Graduation year" value={detail.graduation_year} />
+                  <DetailRow label="Phone" value={detail.phone || "—"} />
+                  <DetailRow label="WhatsApp" value={detail.whatsapp || "—"} />
+                  <DetailRow label="City" value={detail.city || "—"} />
+                  <DetailRow label="State" value={detail.state || "—"} />
+                  <DetailRow label="Country" value={detail.country || "—"} />
+                  <DetailRow label="Hide phone" value={detail.hide_phone ? "Yes" : "No"} />
+                  <DetailRow label="Last seen" value={detail.last_seen_at ? new Date(detail.last_seen_at).toLocaleString() : "Never"} />
+                  <DetailRow label="Joined" value={new Date(detail.created_at).toLocaleString()} />
+                </div>
+                {detail.bio && (
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Bio</Label>
+                    <p className="mt-1 whitespace-pre-line">{detail.bio}</p>
+                  </div>
+                )}
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Activity</Label>
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    <Stat label="Job apps" value={counts[detail.user_id]?.jobs ?? "…"} />
+                    <Stat label="Donations" value={counts[detail.user_id]?.donations ?? "…"} />
+                    <Stat label="Event RSVPs" value={counts[detail.user_id]?.events ?? "…"} />
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  User ID: <code className="text-[10px]">{detail.user_id}</code>
+                </div>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => { setResetTarget(detail); setDetail(null); }}><KeyRound className="w-4 h-4" /> Reset password</Button>
+                <Button variant="outline" onClick={() => { deleteUsers([detail.user_id]); setDetail(null); }}><Trash2 className="w-4 h-4 text-destructive" /> Delete user</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+const DetailRow = ({ label, value }: { label: string; value: any }) => (
+  <div>
+    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    <div className="text-sm font-medium truncate">{value ?? "—"}</div>
+  </div>
+);
+
 
 // -------- Jobs --------
 const JobsTab = () => {
