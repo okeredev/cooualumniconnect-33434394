@@ -342,7 +342,15 @@ const DashboardPage = () => {
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Display name"><Input value={profile.display_name ?? ""} onChange={(e) => updateProfile({ display_name: e.target.value })} maxLength={80} /></Field>
-              <Field label="Phone (Nigerian)"><Input value={profile.phone ?? ""} onChange={(e) => updateProfile({ phone: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
+              <Field label="Date of birth">
+                <Input
+                  type="date"
+                  value={profile.date_of_birth ?? ""}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => updateProfile({ date_of_birth: e.target.value || null })}
+                />
+              </Field>
+              <Field label="Phone"><Input value={profile.phone ?? ""} onChange={(e) => updateProfile({ phone: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
               <Field label="WhatsApp"><Input value={profile.whatsapp ?? ""} onChange={(e) => updateProfile({ whatsapp: e.target.value })} placeholder="+234 80X XXX XXXX" maxLength={20} /></Field>
               <Field label="Graduation year">
                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.graduation_year ?? ""} onChange={(e) => updateProfile({ graduation_year: e.target.value ? Number(e.target.value) : null })}>
@@ -356,18 +364,60 @@ const DashboardPage = () => {
                   {COOU_DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </Field>
-              <Field label="State">
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.state ?? ""} onChange={(e) => updateProfile({ state: e.target.value })}>
-                  <option value="">Select state</option>
-                  {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+              <Field label="Country">
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={profile.country ?? "Nigeria"}
+                  onChange={(e) => updateProfile({ country: e.target.value, state: null })}
+                >
+                  {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>
+              <Field label="State / Region">
+                {(() => {
+                  const states = COUNTRY_STATES[profile.country ?? "Nigeria"] ?? [];
+                  if (states.length === 0) {
+                    return <Input value={profile.state ?? ""} onChange={(e) => updateProfile({ state: e.target.value })} maxLength={80} placeholder="Enter state / region" />;
+                  }
+                  return (
+                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={profile.state ?? ""} onChange={(e) => updateProfile({ state: e.target.value })}>
+                      <option value="">Select state</option>
+                      {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  );
+                })()}
+              </Field>
               <Field label="City"><Input value={profile.city ?? ""} onChange={(e) => updateProfile({ city: e.target.value })} maxLength={80} /></Field>
-              <Field label="Address"><Input value={profile.address ?? ""} onChange={(e) => updateProfile({ address: e.target.value })} maxLength={200} /></Field>
+              <Field label="Permanent address"><Input value={profile.address ?? ""} onChange={(e) => updateProfile({ address: e.target.value })} maxLength={200} placeholder="Hometown / family address" /></Field>
+              <Field label="Current address"><Input value={profile.current_address ?? ""} onChange={(e) => updateProfile({ current_address: e.target.value })} maxLength={200} placeholder="Where you currently live" /></Field>
             </div>
             <Field label="Bio">
               <Textarea rows={3} value={profile.bio ?? ""} onChange={(e) => updateProfile({ bio: e.target.value })} maxLength={500} placeholder="Tell the network about yourself..." />
             </Field>
+
+            {/* Certificate upload */}
+            <div className="rounded-xl border border-border/60 p-4 bg-muted/30 space-y-3">
+              <div className="flex items-start gap-3">
+                <FileText className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-sm">COOU Certificate / Statement of Result</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Upload a clear scan or photo of your degree certificate or statement of result. PDF, JPG or PNG · max 10MB. Visible only to you and admins (used for verification).</div>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => certRef.current?.click()} disabled={uploadingCert}>
+                  {uploadingCert ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {profile.certificate_url ? "Replace certificate" : "Upload certificate"}
+                </Button>
+                {profile.certificate_url && (
+                  <a href={profile.certificate_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+                    <ExternalLink className="w-3.5 h-3.5" /> View uploaded file
+                  </a>
+                )}
+                <input ref={certRef} type="file" accept="application/pdf,image/png,image/jpeg" hidden onChange={(e) => e.target.files?.[0] && uploadCertificate(e.target.files[0])} />
+              </div>
+            </div>
+
             <div className="rounded-xl border border-border/60 p-4 flex items-start justify-between gap-3 bg-muted/30">
               <div>
                 <div className="font-medium text-sm">Hide my phone number from the directory</div>
