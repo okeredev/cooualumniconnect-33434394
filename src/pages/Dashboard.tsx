@@ -417,13 +417,24 @@ const DashboardPage = () => {
               <Textarea rows={3} value={profile.bio ?? ""} onChange={(e) => updateProfile({ bio: e.target.value })} maxLength={500} placeholder="Tell the network about yourself..." />
             </Field>
 
-            {/* Certificate upload */}
-            <div className="rounded-xl border border-border/60 p-4 bg-muted/30 space-y-3">
+            {/* Certificate upload + verification status */}
+            <div className={`rounded-xl border p-4 space-y-3 ${certToneClass}`}>
               <div className="flex items-start gap-3">
-                <FileText className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <FileText className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm">COOU Certificate / Statement of Result</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">Upload a clear scan or photo of your degree certificate or statement of result. PDF, JPG or PNG · max 10MB. Visible only to you and admins (used for verification).</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="font-medium text-sm">COOU Certificate / Statement of Result</div>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-card border border-current">
+                      <CertIcon className="w-3 h-3" /> {certMeta.label}
+                    </span>
+                  </div>
+                  <div className="text-xs opacity-80 mt-0.5">{certMeta.description}</div>
+                  <div className="text-xs opacity-80 mt-1">PDF, JPG or PNG · max 10MB. Visible only to you and admins.</div>
+                  {profile.certificate_review_notes && (
+                    <div className="text-xs mt-2 p-2 rounded bg-card border border-current">
+                      <strong>Admin note:</strong> {profile.certificate_review_notes}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -439,6 +450,33 @@ const DashboardPage = () => {
                 <input ref={certRef} type="file" accept="application/pdf,image/png,image/jpeg" hidden onChange={(e) => e.target.files?.[0] && uploadCertificate(e.target.files[0])} />
               </div>
             </div>
+
+            <div className="rounded-xl border border-border/60 p-4 flex items-start justify-between gap-3 bg-muted/30">
+              <div>
+                <div className="font-medium text-sm">Hide my phone number from the directory</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Other alumni won't see your phone or WhatsApp on your public profile. Admins always see it.</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" className="sr-only peer" checked={!!profile.hide_phone} onChange={(e) => updateProfile({ hide_phone: e.target.checked })} />
+                <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-primary/40 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-card after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+              </label>
+            </div>
+
+            {/* Alternative email + social links */}
+            <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-border/60">
+              <Field label="Alternative email"><Input type="email" value={profile.alt_email ?? ""} onChange={(e) => updateProfile({ alt_email: e.target.value })} placeholder="backup@example.com" maxLength={120} /></Field>
+              <Field label="LinkedIn"><Input value={profile.linkedin ?? ""} onChange={(e) => updateProfile({ linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." /></Field>
+              <Field label="X / Twitter"><Input value={profile.twitter ?? ""} onChange={(e) => updateProfile({ twitter: e.target.value })} placeholder="https://x.com/..." /></Field>
+              <Field label="Facebook"><Input value={profile.facebook ?? ""} onChange={(e) => updateProfile({ facebook: e.target.value })} placeholder="https://facebook.com/..." /></Field>
+              <Field label="Instagram"><Input value={profile.instagram ?? ""} onChange={(e) => updateProfile({ instagram: e.target.value })} placeholder="https://instagram.com/..." /></Field>
+              <Field label="YouTube"><Input value={profile.youtube ?? ""} onChange={(e) => updateProfile({ youtube: e.target.value })} placeholder="https://youtube.com/@..." /></Field>
+              <Field label="TikTok"><Input value={profile.tiktok ?? ""} onChange={(e) => updateProfile({ tiktok: e.target.value })} placeholder="https://tiktok.com/@..." /></Field>
+              <Field label="Telegram"><Input value={profile.telegram ?? ""} onChange={(e) => updateProfile({ telegram: e.target.value })} placeholder="https://t.me/..." /></Field>
+              <Field label="GitHub"><Input value={profile.github ?? ""} onChange={(e) => updateProfile({ github: e.target.value })} placeholder="https://github.com/..." /></Field>
+              <Field label="Website"><Input value={profile.website ?? ""} onChange={(e) => updateProfile({ website: e.target.value })} placeholder="https://..." /></Field>
+            </div>
+          </div>
+
 
             <div className="rounded-xl border border-border/60 p-4 flex items-start justify-between gap-3 bg-muted/30">
               <div>
