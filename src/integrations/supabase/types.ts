@@ -460,8 +460,13 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          alt_email: string | null
           avatar_url: string | null
           bio: string | null
+          certificate_review_notes: string | null
+          certificate_reviewed_at: string | null
+          certificate_reviewed_by: string | null
+          certificate_status: string
           certificate_url: string | null
           city: string | null
           country: string | null
@@ -471,26 +476,36 @@ export type Database = {
           department: string | null
           display_name: string | null
           email: string | null
+          facebook: string | null
           github: string | null
           graduation_year: number | null
           hide_phone: boolean
           id: string
+          instagram: string | null
           last_seen_at: string | null
           linkedin: string | null
           phone: string | null
           state: string | null
           suspended: boolean
+          telegram: string | null
+          tiktok: string | null
           twitter: string | null
           updated_at: string
           user_id: string
           verified: boolean
           website: string | null
           whatsapp: string | null
+          youtube: string | null
         }
         Insert: {
           address?: string | null
+          alt_email?: string | null
           avatar_url?: string | null
           bio?: string | null
+          certificate_review_notes?: string | null
+          certificate_reviewed_at?: string | null
+          certificate_reviewed_by?: string | null
+          certificate_status?: string
           certificate_url?: string | null
           city?: string | null
           country?: string | null
@@ -500,26 +515,36 @@ export type Database = {
           department?: string | null
           display_name?: string | null
           email?: string | null
+          facebook?: string | null
           github?: string | null
           graduation_year?: number | null
           hide_phone?: boolean
           id?: string
+          instagram?: string | null
           last_seen_at?: string | null
           linkedin?: string | null
           phone?: string | null
           state?: string | null
           suspended?: boolean
+          telegram?: string | null
+          tiktok?: string | null
           twitter?: string | null
           updated_at?: string
           user_id: string
           verified?: boolean
           website?: string | null
           whatsapp?: string | null
+          youtube?: string | null
         }
         Update: {
           address?: string | null
+          alt_email?: string | null
           avatar_url?: string | null
           bio?: string | null
+          certificate_review_notes?: string | null
+          certificate_reviewed_at?: string | null
+          certificate_reviewed_by?: string | null
+          certificate_status?: string
           certificate_url?: string | null
           city?: string | null
           country?: string | null
@@ -529,21 +554,26 @@ export type Database = {
           department?: string | null
           display_name?: string | null
           email?: string | null
+          facebook?: string | null
           github?: string | null
           graduation_year?: number | null
           hide_phone?: boolean
           id?: string
+          instagram?: string | null
           last_seen_at?: string | null
           linkedin?: string | null
           phone?: string | null
           state?: string | null
           suspended?: boolean
+          telegram?: string | null
+          tiktok?: string | null
           twitter?: string | null
           updated_at?: string
           user_id?: string
           verified?: boolean
           website?: string | null
           whatsapp?: string | null
+          youtube?: string | null
         }
         Relationships: []
       }
@@ -609,8 +639,10 @@ export type Database = {
       profiles_public: {
         Row: {
           address: string | null
+          alt_email: string | null
           avatar_url: string | null
           bio: string | null
+          certificate_status: string | null
           certificate_url: string | null
           city: string | null
           country: string | null
@@ -620,26 +652,33 @@ export type Database = {
           department: string | null
           display_name: string | null
           email: string | null
+          facebook: string | null
           github: string | null
           graduation_year: number | null
           hide_phone: boolean | null
           id: string | null
+          instagram: string | null
           last_seen_at: string | null
           linkedin: string | null
           phone: string | null
           state: string | null
           suspended: boolean | null
+          telegram: string | null
+          tiktok: string | null
           twitter: string | null
           updated_at: string | null
           user_id: string | null
           verified: boolean | null
           website: string | null
           whatsapp: string | null
+          youtube: string | null
         }
         Insert: {
           address?: string | null
+          alt_email?: string | null
           avatar_url?: string | null
           bio?: string | null
+          certificate_status?: string | null
           certificate_url?: never
           city?: string | null
           country?: string | null
@@ -649,26 +688,33 @@ export type Database = {
           department?: string | null
           display_name?: string | null
           email?: string | null
+          facebook?: string | null
           github?: string | null
           graduation_year?: number | null
           hide_phone?: boolean | null
           id?: string | null
+          instagram?: string | null
           last_seen_at?: string | null
           linkedin?: string | null
           phone?: never
           state?: string | null
           suspended?: boolean | null
+          telegram?: string | null
+          tiktok?: string | null
           twitter?: string | null
           updated_at?: string | null
           user_id?: string | null
           verified?: boolean | null
           website?: string | null
           whatsapp?: never
+          youtube?: string | null
         }
         Update: {
           address?: string | null
+          alt_email?: string | null
           avatar_url?: string | null
           bio?: string | null
+          certificate_status?: string | null
           certificate_url?: never
           city?: string | null
           country?: string | null
@@ -678,21 +724,26 @@ export type Database = {
           department?: string | null
           display_name?: string | null
           email?: string | null
+          facebook?: string | null
           github?: string | null
           graduation_year?: number | null
           hide_phone?: boolean | null
           id?: string | null
+          instagram?: string | null
           last_seen_at?: string | null
           linkedin?: string | null
           phone?: never
           state?: string | null
           suspended?: boolean | null
+          telegram?: string | null
+          tiktok?: string | null
           twitter?: string | null
           updated_at?: string | null
           user_id?: string | null
           verified?: boolean | null
           website?: string | null
           whatsapp?: never
+          youtube?: string | null
         }
         Relationships: []
       }

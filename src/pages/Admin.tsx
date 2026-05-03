@@ -309,6 +309,8 @@ type FullProfile = ProfileRow & {
   country: string | null; address: string | null; current_address: string | null; linkedin: string | null;
   github: string | null; twitter: string | null; website: string | null; hide_phone: boolean;
   last_seen_at: string | null; date_of_birth: string | null; certificate_url: string | null;
+  certificate_status: string | null; certificate_review_notes: string | null;
+  alt_email: string | null; facebook: string | null; instagram: string | null; youtube: string | null; tiktok: string | null; telegram: string | null;
 };
 
 const UsersTab = () => {
@@ -560,9 +562,31 @@ const UsersTab = () => {
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Certificate / Statement of Result</Label>
                   {detail.certificate_url ? (
-                    <a href={detail.certificate_url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
-                      <ExternalLink className="w-3.5 h-3.5" /> View uploaded certificate
-                    </a>
+                    <div className="mt-1 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <a href={detail.certificate_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                          <ExternalLink className="w-3.5 h-3.5" /> View certificate
+                        </a>
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full border ${
+                          detail.certificate_status === "verified" ? "bg-green-100 text-green-800 border-green-300"
+                          : detail.certificate_status === "rejected" ? "bg-red-100 text-red-800 border-red-300"
+                          : detail.certificate_status === "pending" ? "bg-amber-100 text-amber-800 border-amber-300"
+                          : "bg-muted text-muted-foreground border-border"
+                        }`}>{detail.certificate_status || "none"}</span>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button size="sm" variant="hero" onClick={async () => {
+                          const { error } = await supabase.from("profiles").update({ certificate_status: "verified", certificate_reviewed_at: new Date().toISOString(), verified: true } as any).eq("user_id", detail.user_id);
+                          if (error) toast.error(error.message); else { toast.success("Certificate verified"); setDetail({ ...detail, certificate_status: "verified", verified: true }); load(); }
+                        }}><Check className="w-4 h-4" /> Verify</Button>
+                        <Button size="sm" variant="outline" onClick={async () => {
+                          const note = prompt("Reason for rejection (optional):") ?? "";
+                          const { error } = await supabase.from("profiles").update({ certificate_status: "rejected", certificate_reviewed_at: new Date().toISOString(), certificate_review_notes: note || null } as any).eq("user_id", detail.user_id);
+                          if (error) toast.error(error.message); else { toast.success("Certificate rejected"); setDetail({ ...detail, certificate_status: "rejected", certificate_review_notes: note || null }); load(); }
+                        }}><XIcon className="w-4 h-4" /> Reject</Button>
+                      </div>
+                      {detail.certificate_review_notes && <p className="text-xs text-muted-foreground italic">Note: {detail.certificate_review_notes}</p>}
+                    </div>
                   ) : (
                     <p className="mt-1 text-sm text-muted-foreground">Not uploaded</p>
                   )}
