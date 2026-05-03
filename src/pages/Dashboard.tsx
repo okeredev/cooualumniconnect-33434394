@@ -304,6 +304,13 @@ const DashboardPage = () => {
   }
 
   const initials = (profile.display_name || "U").split(" ").map((p) => p[0]).slice(0, 2).join("");
+  const completeness = computeProfileCompleteness(profile, education.length > 0, employment.length > 0);
+  const certMeta = certStatusMeta(profile.certificate_status);
+  const certToneClass = certMeta.tone === "green" ? "bg-green-100 text-green-800 border-green-300"
+    : certMeta.tone === "amber" ? "bg-amber-100 text-amber-800 border-amber-300"
+    : certMeta.tone === "red" ? "bg-red-100 text-red-800 border-red-300"
+    : "bg-muted text-muted-foreground border-border";
+  const CertIcon = certMeta.tone === "green" ? ShieldCheck : certMeta.tone === "amber" ? Clock : certMeta.tone === "red" ? ShieldX : ShieldAlert;
 
   return (
     <AppShell>
