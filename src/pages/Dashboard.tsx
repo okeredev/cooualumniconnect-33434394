@@ -7,17 +7,19 @@ import { Label } from "@/components/ui/label";
 
 import { COOU_DEPARTMENTS, COOU_FACULTIES, GRAD_YEARS, NIGERIAN_SCHOOLS } from "@/data/coou";
 import { COUNTRIES, COUNTRY_STATES } from "@/data/locations";
-import { Pencil, Check, Upload, Trash2, Plus, Loader2, BadgeCheck, FileText, Cake, ExternalLink } from "lucide-react";
+import { Pencil, Check, Upload, Trash2, Plus, Loader2, BadgeCheck, FileText, Cake, ExternalLink, AlertCircle, ShieldCheck, ShieldAlert, ShieldX, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
+import { computeProfileCompleteness, certStatusMeta } from "@/lib/profileCompleteness";
 
 type Profile = {
   id?: string;
   user_id: string;
   display_name: string | null;
   email: string | null;
+  alt_email: string | null;
   avatar_url: string | null;
   bio: string | null;
   phone: string | null;
@@ -31,10 +33,17 @@ type Profile = {
   github: string | null;
   twitter: string | null;
   website: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  youtube: string | null;
+  tiktok: string | null;
+  telegram: string | null;
   graduation_year: number | null;
   department: string | null;
   date_of_birth: string | null;
   certificate_url: string | null;
+  certificate_status: string | null;
+  certificate_review_notes: string | null;
   verified: boolean;
   hide_phone: boolean;
 };
@@ -101,6 +110,7 @@ const DashboardPage = () => {
     const { error } = await supabase.from("profiles").update({
       display_name: profile.display_name,
       bio: profile.bio,
+      alt_email: profile.alt_email,
       phone: profile.phone,
       whatsapp: profile.whatsapp,
       address: profile.address,
@@ -112,11 +122,16 @@ const DashboardPage = () => {
       github: profile.github,
       twitter: profile.twitter,
       website: profile.website,
+      facebook: profile.facebook,
+      instagram: profile.instagram,
+      youtube: profile.youtube,
+      tiktok: profile.tiktok,
+      telegram: profile.telegram,
       graduation_year: profile.graduation_year,
       department: profile.department,
       date_of_birth: profile.date_of_birth,
       hide_phone: profile.hide_phone,
-    }).eq("user_id", user.id);
+    } as any).eq("user_id", user.id);
     setSaving(false);
     if (error) toast.error(error.message);
     else toast.success("Profile saved");
