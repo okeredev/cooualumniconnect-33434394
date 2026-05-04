@@ -1,141 +1,142 @@
-// Shared data sourced from the official COOU website (coou.edu.ng)
-// Chukwuemeka Odumegwu Ojukwu University, Anambra State
+// Official COOU faculties and departments
+// Source: coou.edu.ng — Chukwuemeka Odumegwu Ojukwu University
+
 export const COOU_FACULTIES = [
   "Agriculture",
   "Arts",
   "Basic Clinical Sciences",
   "Basic Medical Sciences",
   "Clinical Medicine",
-  "Dentistry",
   "Education",
   "Engineering",
   "Environmental Sciences",
-  "Health Sciences & Technology",
+  "Health Science & Technology",
   "Law",
   "Management Sciences",
   "Natural Sciences",
-  "Nursing Sciences",
   "Pharmaceutical Sciences",
   "Physical Sciences",
   "Social Sciences",
-  "Veterinary Medicine",
 ];
 
-// Comprehensive department list across all COOU faculties
-export const COOU_DEPARTMENTS = [
-  // Agriculture
-  "Agricultural Economics & Extension",
-  "Animal Science",
-  "Crop Science",
-  "Fisheries & Aquaculture",
-  "Food Science & Technology",
-  "Soil Science",
-  // Arts
-  "English Language & Literature",
-  "History & International Studies",
-  "Igbo, African & Asian Studies",
-  "Linguistics",
-  "Music",
-  "Philosophy",
-  "Religion & Human Relations",
-  "Theatre & Film Studies",
-  // Basic Clinical / Medical Sciences
-  "Anatomy",
-  "Physiology",
-  "Biochemistry",
-  "Medical Biochemistry",
-  "Medical Laboratory Science",
-  "Pharmacology & Therapeutics",
-  // Clinical Medicine
-  "Medicine & Surgery",
-  "Community Medicine",
-  "Internal Medicine",
-  "Obstetrics & Gynaecology",
-  "Paediatrics",
-  "Pathology",
-  "Radiology",
-  "Surgery",
-  // Dentistry
-  "Dental Surgery",
-  "Oral Pathology",
-  "Restorative Dentistry",
-  // Education
-  "Adult & Continuing Education",
-  "Educational Management & Policy",
-  "Educational Foundations",
-  "Guidance & Counselling",
-  "Human Kinetics & Health Education",
-  "Library & Information Science",
-  "Science Education",
-  "Vocational & Technical Education",
-  // Engineering
-  "Agricultural & Bioresources Engineering",
-  "Chemical Engineering",
-  "Civil Engineering",
-  "Computer Engineering",
-  "Electrical Engineering",
-  "Electronics & Computer Engineering",
-  "Mechanical Engineering",
-  "Mechatronics Engineering",
-  "Petroleum & Gas Engineering",
-  // Environmental Sciences
-  "Architecture",
-  "Building",
-  "Estate Management",
-  "Environmental Management",
-  "Geography & Meteorology",
-  "Quantity Surveying",
-  "Surveying & Geoinformatics",
-  "Urban & Regional Planning",
-  // Health Sciences
-  "Environmental Health Science",
-  "Public Health",
-  "Optometry",
-  // Law
-  "Commercial & Property Law",
-  "International Law & Jurisprudence",
-  "Public & Private Law",
-  // Management Sciences
-  "Accountancy",
-  "Banking & Finance",
-  "Business Administration",
-  "Cooperative Economics & Management",
-  "Entrepreneurial Studies",
-  "Marketing",
-  "Public Administration",
-  // Natural / Physical Sciences
-  "Biology",
-  "Botany",
-  "Chemistry",
-  "Computer Science",
-  "Geology",
-  "Industrial Chemistry",
-  "Industrial Physics",
-  "Mathematics",
-  "Microbiology",
-  "Parasitology & Entomology",
-  "Physics",
-  "Statistics",
-  "Zoology",
-  // Nursing
-  "Nursing Science",
-  // Pharmaceutical Sciences
-  "Clinical Pharmacy",
-  "Pharmaceutical Chemistry",
-  "Pharmaceutical Microbiology",
-  "Pharmaceutics & Pharmaceutical Technology",
-  "Pharmacognosy",
-  "Pharmacy",
-  // Social Sciences
-  "Economics",
-  "Mass Communication",
-  "Political Science",
-  "Psychology",
-  "Sociology / Anthropology",
-  "Social Work",
-  // Veterinary
-  "Veterinary Medicine",
-];
+// All departments grouped by faculty
+export const COOU_DEPARTMENTS_BY_FACULTY: Record<string, string[]> = {
+  "Agriculture": [
+    "Agricultural Economics & Extension",
+    "Animal Science",
+    "Crop Science & Horticulture",
+    "Fishery & Aquaculture",
+    "Food Science & Technology",
+    "Soil Science",
+  ],
+  "Arts": [
+    "English Language & Literature",
+    "History & International Studies",
+    "Linguistics / Igbo Language",
+    "Music",
+    "Philosophy",
+    "Religion & Human Relations",
+    "Theatre Arts",
+  ],
+  "Basic Clinical Sciences": [
+    "Chemical Pathology",
+    "Hematology & Immunology",
+    "Histopathology & Morbid Anatomy",
+  ],
+  "Basic Medical Sciences": [
+    "Anatomy",
+    "Biochemistry",
+    "Physiology",
+  ],
+  "Clinical Medicine": [
+    "Community Medicine",
+    "Internal Medicine",
+    "Medical Microbiology & Parasitology",
+    "Obstetrics & Gynecology",
+    "Ophthalmology",
+    "Pediatrics",
+    "Pharmacology & Therapeutics",
+    "Psychiatry",
+    "Radiology",
+    "Surgery",
+  ],
+  "Education": [
+    "Arts & Social Sciences Education",
+    "Educational Foundations",
+    "Library & Information Science",
+    "Science Education",
+  ],
+  "Engineering": [
+    "Chemical Engineering",
+    "Civil Engineering",
+    "Electrical / Electronics Engineering",
+    "Mechanical Engineering",
+    "Computer Engineering",
+  ],
+  "Environmental Sciences": [
+    "Architecture",
+    "Environmental Management",
+    "Estate Management",
+    "Fine & Applied Arts",
+    "Geography & Meteorology",
+    "Surveying & Geoinformatics",
+    "Urban & Regional Planning",
+  ],
+  "Health Science & Technology": [
+    "Medical Laboratory Science",
+    "Nursing Science",
+    "Optometry",
+    "Public Health Technology",
+  ],
+  "Law": [
+    "Common Law",
+    "International Law & Jurisprudence",
+    "Private & Property Law",
+    "Public Law",
+  ],
+  "Management Sciences": [
+    "Accountancy",
+    "Banking & Finance",
+    "Business Administration",
+    "Cooperative Economics & Management",
+    "Entrepreneurship Studies",
+    "Insurance & Risk Management",
+    "Marketing",
+    "Public Administration",
+  ],
+  "Natural Sciences": [
+    "Applied Microbiology & Brewing",
+    "Botany",
+    "Microbiology",
+    "Zoology",
+  ],
+  "Pharmaceutical Sciences": [
+    "Clinical Pharmacy & Pharmacy Practice",
+    "Pharmaceutical Chemistry",
+    "Pharmaceutics & Pharmaceutical Technology",
+    "Pharmacognosy & Traditional Medicine",
+    "Pharmacology & Toxicology",
+  ],
+  "Physical Sciences": [
+    "Computer Science",
+    "Geology",
+    "Industrial Chemistry",
+    "Industrial Mathematics",
+    "Industrial Physics",
+    "Statistics",
+  ],
+  "Social Sciences": [
+    "Economics",
+    "Mass Communication",
+    "Political Science",
+    "Psychology",
+    "Social Work",
+    "Sociology & Anthropology",
+  ],
+};
+
+// Flat list of all departments (for dropdowns)
+export const COOU_DEPARTMENTS: string[] = Object.values(COOU_DEPARTMENTS_BY_FACULTY).flat().sort();
 
 export const LOCATIONS = [
   "Lagos, Nigeria", "Abuja, Nigeria", "Awka, Anambra", "Onitsha, Anambra", "Nnewi, Anambra",
@@ -143,113 +144,60 @@ export const LOCATIONS = [
   "Ibadan, Nigeria", "Kano, Nigeria", "Benin City, Nigeria", "Owerri, Nigeria", "Asaba, Nigeria",
 ];
 
-// Graduation years from 2004 to 2025 (most recent first)
 export const GRAD_YEARS = Array.from({ length: 2025 - 2004 + 1 }, (_, i) => 2025 - i);
 
-// Common Nigerian universities & polytechnics (suggestions for the education form)
-export const NIGERIAN_SCHOOLS = [
+export const NIGERIAN_UNIVERSITIES = [
   "Chukwuemeka Odumegwu Ojukwu University (COOU)",
-  "Nnamdi Azikiwe University, Awka",
-  "University of Nigeria, Nsukka",
-  "University of Lagos",
-  "University of Ibadan",
-  "University of Benin",
-  "University of Port Harcourt",
-  "Ahmadu Bello University, Zaria",
-  "Obafemi Awolowo University, Ile-Ife",
-  "University of Ilorin",
-  "University of Jos",
-  "Bayero University, Kano",
-  "University of Calabar",
-  "University of Uyo",
-  "Federal University of Technology, Owerri",
-  "Federal University of Technology, Akure",
-  "Federal University of Technology, Minna",
-  "Federal University, Oye-Ekiti",
-  "Federal University, Ndufu-Alike Ikwo",
-  "Federal University, Lokoja",
-  "Federal University, Lafia",
-  "Federal University, Dutsin-Ma",
-  "Federal University, Wukari",
-  "Federal University, Otuoke",
-  "Federal University, Kashere",
-  "Federal University, Birnin Kebbi",
-  "Federal University, Gusau",
-  "Federal University, Gashua",
-  "Lagos State University (LASU)",
-  "Ekiti State University",
-  "Enugu State University of Science and Technology (ESUT)",
-  "Imo State University",
-  "Anambra State University (now COOU)",
-  "Delta State University, Abraka",
-  "Rivers State University",
-  "Abia State University, Uturu",
-  "Ebonyi State University",
-  "Benue State University",
-  "Kogi State University",
-  "Kaduna State University",
-  "Kano State University of Science & Technology",
-  "Adekunle Ajasin University, Akungba",
-  "Ladoke Akintola University of Technology (LAUTECH)",
-  "Olabisi Onabanjo University",
-  "Tai Solarin University of Education",
-  "Babcock University",
+  "Nnamdi Azikiwe University (UNIZIK)",
+  "University of Nigeria, Nsukka (UNN)",
+  "University of Lagos (UNILAG)",
+  "University of Ibadan (UI)",
+  "Obafemi Awolowo University (OAU)",
+  "Ahmadu Bello University (ABU)",
+  "University of Ilorin (UNILORIN)",
+  "University of Benin (UNIBEN)",
+  "University of Port Harcourt (UNIPORT)",
+  "Federal University of Technology, Owerri (FUTO)",
+  "Federal University of Technology, Akure (FUTA)",
+  "Federal University of Technology, Minna (FUTMINNA)",
   "Covenant University",
-  "Bowen University",
-  "Pan-Atlantic University",
-  "Afe Babalola University, Ado-Ekiti",
-  "Lead City University",
-  "Redeemer's University",
-  "Madonna University",
-  "Igbinedion University",
-  "Caritas University, Enugu",
-  "Veritas University, Abuja",
-  "Bingham University",
-  "American University of Nigeria, Yola",
-  "Federal Polytechnic, Oko",
-  "Federal Polytechnic, Nekede",
-  "Federal Polytechnic, Ilaro",
-  "Yaba College of Technology",
-  "Auchi Polytechnic",
-  "Kaduna Polytechnic",
-  "Nigerian Defence Academy",
-  "Alvan Ikoku Federal College of Education",
-  "Federal College of Education, Eha-Amufu",
-];
+  "Babcock University",
+  "Afe Babalola University",
+  "Lagos State University (LASU)",
+  "Enugu State University of Science and Technology (ESUT)",
+  "Imo State University (IMSU)",
+  "Abia State University (ABSU)",
+  "Ebonyi State University (EBSU)",
+  "Rivers State University (RSU)",
+  "Delta State University (DELSU)",
+  "Ambrose Alli University (AAU)",
+  "University of Uyo (UNIUYO)",
+  "University of Calabar (UNICAL)",
+  "University of Jos (UNIJOS)",
+  "University of Abuja (UNIABUJA)",
+  "Bayero University Kano (BUK)"
+].sort();
 
 export type Alumni = {
-  id: string;
-  name: string;
-  initials: string;
-  year: number;
-  faculty: string;
-  department: string;
-  location: string;
-  role: string;
-  company: string;
-  industry: string;
-  skills: string[];
-  bio: string;
-  tone: string;
+  id: string; name: string; initials: string; year: number; faculty: string;
+  department: string; location: string; role: string; company: string;
+  industry: string; skills: string[]; bio: string; tone: string;
 };
 
 const tones = [
-  "from-emerald-700 to-emerald-900",
-  "from-amber-600 to-amber-800",
-  "from-emerald-600 to-teal-800",
-  "from-yellow-600 to-amber-900",
-  "from-teal-700 to-emerald-900",
-  "from-amber-700 to-yellow-900",
+  "from-emerald-700 to-emerald-900", "from-amber-600 to-amber-800",
+  "from-emerald-600 to-teal-800", "from-yellow-600 to-amber-900",
+  "from-teal-700 to-emerald-900", "from-amber-700 to-yellow-900",
 ];
 
 export const ALUMNI: Alumni[] = [
   { id: "a1", name: "Chinaza Obi", initials: "CO", year: 2018, faculty: "Engineering", department: "Computer Science", location: "Lagos, Nigeria", role: "Senior Software Engineer", company: "Flutterwave", industry: "Fintech", skills: ["React", "Node.js", "AWS"], bio: "Building payment rails across Africa.", tone: tones[0] },
   { id: "a2", name: "Ifeoma Eze", initials: "IE", year: 2015, faculty: "Management Sciences", department: "Business Administration", location: "Abuja, Nigeria", role: "Product Manager", company: "Paystack", industry: "Fintech", skills: ["Strategy", "Analytics", "Leadership"], bio: "PM passionate about emerging market commerce.", tone: tones[1] },
-  { id: "a3", name: "Emeka Nwosu", initials: "EN", year: 2012, faculty: "Clinical Medicine", department: "Medicine & Surgery", location: "Awka, Anambra", role: "Consultant Physician", company: "COOU Teaching Hospital", industry: "Healthcare", skills: ["Cardiology", "Research"], bio: "Cardiologist and clinical educator.", tone: tones[2] },
+  { id: "a3", name: "Emeka Nwosu", initials: "EN", year: 2012, faculty: "Clinical Medicine", department: "Internal Medicine", location: "Awka, Anambra", role: "Consultant Physician", company: "COOU Teaching Hospital", industry: "Healthcare", skills: ["Cardiology", "Research"], bio: "Cardiologist and clinical educator.", tone: tones[2] },
   { id: "a4", name: "Adaeze Okafor", initials: "AO", year: 2020, faculty: "Arts", department: "Mass Communication", location: "Abuja, Nigeria", role: "Brand Strategist", company: "MTN Nigeria", industry: "Telecom", skills: ["Brand", "Content", "PR"], bio: "Storyteller for African brands.", tone: tones[3] },
-  { id: "a5", name: "Tobenna Umeh", initials: "TU", year: 2017, faculty: "Engineering", department: "Electrical Engineering", location: "Port Harcourt, Nigeria", role: "Power Systems Engineer", company: "Shell Nigeria", industry: "Energy", skills: ["Power", "MATLAB", "Project Mgmt"], bio: "Energy infrastructure for emerging grids.", tone: tones[4] },
-  { id: "a6", name: "Ngozi Ibe", initials: "NI", year: 2014, faculty: "Law", department: "Public & Private Law", location: "Onitsha, Anambra", role: "Corporate Counsel", company: "Aluko & Oyebode", industry: "Legal", skills: ["M&A", "Compliance"], bio: "Corporate law and policy.", tone: tones[5] },
-  { id: "a7", name: "Kelechi Anya", initials: "KA", year: 2019, faculty: "Pharmaceutical Sciences", department: "Pharmacy", location: "Enugu, Nigeria", role: "Clinical Pharmacist", company: "HealthPlus Nigeria", industry: "Healthcare", skills: ["Pharmacology", "Patient Care"], bio: "Patient-first community pharmacy.", tone: tones[0] },
+  { id: "a5", name: "Tobenna Umeh", initials: "TU", year: 2017, faculty: "Engineering", department: "Electrical / Electronics Engineering", location: "Port Harcourt, Nigeria", role: "Power Systems Engineer", company: "Shell Nigeria", industry: "Energy", skills: ["Power", "MATLAB", "Project Mgmt"], bio: "Energy infrastructure for emerging grids.", tone: tones[4] },
+  { id: "a6", name: "Ngozi Ibe", initials: "NI", year: 2014, faculty: "Law", department: "Common Law", location: "Onitsha, Anambra", role: "Corporate Counsel", company: "Aluko & Oyebode", industry: "Legal", skills: ["M&A", "Compliance"], bio: "Corporate law and policy.", tone: tones[5] },
+  { id: "a7", name: "Kelechi Anya", initials: "KA", year: 2019, faculty: "Pharmaceutical Sciences", department: "Clinical Pharmacy & Pharmacy Practice", location: "Enugu, Nigeria", role: "Clinical Pharmacist", company: "HealthPlus Nigeria", industry: "Healthcare", skills: ["Pharmacology", "Patient Care"], bio: "Patient-first community pharmacy.", tone: tones[0] },
   { id: "a8", name: "Obinna Mbah", initials: "OM", year: 2016, faculty: "Social Sciences", department: "Economics", location: "Lagos, Nigeria", role: "Quant Analyst", company: "Access Bank", industry: "Finance", skills: ["Python", "Quant", "ML"], bio: "Markets & machine learning.", tone: tones[1] },
   { id: "a9", name: "Uchechi Okeke", initials: "UO", year: 2021, faculty: "Natural Sciences", department: "Microbiology", location: "Nnewi, Anambra", role: "Research Scientist", company: "Nnamdi Azikiwe Teaching Hospital", industry: "Biotech", skills: ["Genomics", "Lab"], bio: "Vaccine research for tropical diseases.", tone: tones[2] },
   { id: "a10", name: "Ebuka Eze", initials: "EE", year: 2013, faculty: "Environmental Sciences", department: "Architecture", location: "Abuja, Nigeria", role: "Senior Architect", company: "Julius Berger", industry: "Architecture", skills: ["Revit", "Sustainable Design"], bio: "Sustainable urbanism across West Africa.", tone: tones[3] },
@@ -258,32 +206,19 @@ export const ALUMNI: Alumni[] = [
 ];
 
 export type Job = {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
+  id: string; title: string; company: string; location: string;
   type: "Full-time" | "Part-time" | "Internship" | "Contract";
-  category: string;
-  remote: boolean;
-  salary: string;
-  posted: string;
-  description: string;
-  requirements: string[];
-  postedBy: string;
-  referralAvailable: boolean;
-  featured?: boolean;
+  category: string; remote: boolean; salary: string; posted: string;
+  description: string; requirements: string[]; postedBy: string;
+  referralAvailable: boolean; featured?: boolean;
 };
 
 export const JOB_CATEGORIES = ["Engineering", "Product", "Design", "Data", "Marketing", "Healthcare", "Finance", "Legal", "Operations"];
 
 export const JOBS: Job[] = [
-  { id: "j1", title: "Frontend Engineer (React)", company: "Flutterwave", location: "Lagos, Nigeria", type: "Full-time", category: "Engineering", remote: true, salary: "₦8M – ₦12M", posted: "2 days ago", description: "Build delightful payment experiences for millions of African users. Work across our merchant dashboard and checkout flows.", requirements: ["3+ yrs React", "TypeScript", "REST/GraphQL"], postedBy: "Chinaza Obi · '18", referralAvailable: true, featured: true },
-  { id: "j2", title: "Product Manager — Payments", company: "Paystack", location: "Lagos, Nigeria · Remote", type: "Full-time", category: "Product", remote: true, salary: "₦15M – ₦22M", posted: "5 days ago", description: "Lead product strategy for cross-border payments serving Nigerian and pan-African merchants.", requirements: ["5+ yrs PM", "Fintech exp", "SQL"], postedBy: "Ifeoma Eze · '15", referralAvailable: true },
-  { id: "j3", title: "Software Engineering Intern", company: "MTN Nigeria", location: "Abuja, Nigeria", type: "Internship", category: "Engineering", remote: false, salary: "₦250k/mo", posted: "1 day ago", description: "12-week internship building internal developer tools. Open to current COOU students.", requirements: ["Final-year student", "Python or JS", "Eager to learn"], postedBy: "Adaeze Okafor · '20", referralAvailable: true, featured: true },
-  { id: "j4", title: "Clinical Pharmacist", company: "COOU Teaching Hospital", location: "Awka, Anambra", type: "Full-time", category: "Healthcare", remote: false, salary: "Competitive", posted: "1 week ago", description: "Join our pharmacy team supporting patient care across inpatient and outpatient services.", requirements: ["B.Pharm", "PCN registered"], postedBy: "Emeka Nwosu · '12", referralAvailable: false },
-  { id: "j5", title: "Quantitative Analyst", company: "Access Bank", location: "Lagos, Nigeria", type: "Full-time", category: "Finance", remote: false, salary: "₦18M – ₦25M", posted: "3 days ago", description: "Develop pricing models and trading strategies for the corporate treasury desk.", requirements: ["MSc Quant/Math", "Python, C++", "Stochastic calc"], postedBy: "Obinna Mbah · '16", referralAvailable: true },
-  { id: "j6", title: "Brand Designer", company: "Paystack", location: "Remote (Nigeria)", type: "Contract", category: "Design", remote: true, salary: "₦600k – ₦1.2M/mo", posted: "4 days ago", description: "6-month engagement refreshing brand assets and marketing systems.", requirements: ["Figma", "Brand systems portfolio"], postedBy: "Adaeze Okafor · '20", referralAvailable: false },
-  { id: "j7", title: "Civil Engineer (Bridges)", company: "Julius Berger", location: "Port Harcourt, Nigeria", type: "Full-time", category: "Engineering", remote: false, salary: "₦15M – ₦20M", posted: "6 days ago", description: "Lead structural design for major bridge infrastructure projects.", requirements: ["7+ yrs", "COREN registered"], postedBy: "Somto Eze · '10", referralAvailable: true },
-  { id: "j8", title: "Data Scientist", company: "Andela", location: "Lagos, Nigeria · Remote", type: "Full-time", category: "Data", remote: true, salary: "₦12M – ₦18M", posted: "Just now", description: "Build ML models for talent matching across our global engineering marketplace.", requirements: ["3+ yrs ML", "Python", "NLP"], postedBy: "COOU Alumni Bot", referralAvailable: false, featured: true },
-  { id: "j9", title: "Junior Lawyer (Corporate)", company: "Aluko & Oyebode", location: "Lagos, Nigeria", type: "Full-time", category: "Legal", remote: false, salary: "₦6M – ₦9M", posted: "2 weeks ago", description: "Support M&A and capital markets transactions for tier-1 clients.", requirements: ["LL.B, BL", "0–2 yrs PQE"], postedBy: "Ngozi Ibe · '14", referralAvailable: true },
+  { id: "j1", title: "Frontend Engineer (React)", company: "Flutterwave", location: "Lagos, Nigeria", type: "Full-time", category: "Engineering", remote: true, salary: "₦8M – ₦12M", posted: "2 days ago", description: "Build delightful payment experiences for millions of African users.", requirements: ["3+ yrs React", "TypeScript", "REST/GraphQL"], postedBy: "Chinaza Obi · '18", referralAvailable: true, featured: true },
+  { id: "j2", title: "Product Manager — Payments", company: "Paystack", location: "Lagos, Nigeria · Remote", type: "Full-time", category: "Product", remote: true, salary: "₦15M – ₦22M", posted: "5 days ago", description: "Lead product strategy for cross-border payments.", requirements: ["5+ yrs PM", "Fintech exp", "SQL"], postedBy: "Ifeoma Eze · '15", referralAvailable: true },
+  { id: "j3", title: "Software Engineering Intern", company: "MTN Nigeria", location: "Abuja, Nigeria", type: "Internship", category: "Engineering", remote: false, salary: "₦250k/mo", posted: "1 day ago", description: "12-week internship building internal developer tools.", requirements: ["Final-year student", "Python or JS", "Eager to learn"], postedBy: "Adaeze Okafor · '20", referralAvailable: true, featured: true },
+  { id: "j4", title: "Clinical Pharmacist", company: "COOU Teaching Hospital", location: "Awka, Anambra", type: "Full-time", category: "Healthcare", remote: false, salary: "Competitive", posted: "1 week ago", description: "Join our pharmacy team supporting patient care.", requirements: ["B.Pharm", "PCN registered"], postedBy: "Emeka Nwosu · '12", referralAvailable: false },
+  { id: "j5", title: "Quantitative Analyst", company: "Access Bank", location: "Lagos, Nigeria", type: "Full-time", category: "Finance", remote: false, salary: "₦18M – ₦25M", posted: "3 days ago", description: "Develop pricing models for corporate treasury.", requirements: ["MSc Quant/Math", "Python, C++", "Stochastic calc"], postedBy: "Obinna Mbah · '16", referralAvailable: true },
 ];

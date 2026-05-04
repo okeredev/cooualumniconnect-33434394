@@ -144,3 +144,6 @@
 }
 .animate-fade-up { animation: fade-up 0.8s var(--transition-smooth) both; }
 .animate-float { animation: float 6s ease-in-out infinite; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

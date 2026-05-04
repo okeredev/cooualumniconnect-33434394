@@ -112,13 +112,21 @@ const JobsPage = () => {
 
         <div className="rounded-2xl bg-card border border-border/60 p-4 md:p-5 shadow-card">
           <div className="grid md:grid-cols-12 gap-3">
-            <div className="md:col-span-9 relative">
+            <div className="md:col-span-6 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Search title, company, or location…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" aria-label="Search jobs" />
             </div>
             <select aria-label="Job type" className="md:col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
               <option value="all">All types</option>
               {["Full-time", "Part-time", "Contract", "Internship"].map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <select aria-label="Location" className="md:col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" onChange={(e) => {
+              const loc = e.target.value;
+              setJobs(prev => [...prev]); // Trigger re-filter
+              setQ(loc === "all" ? "" : loc); // Quick hack to filter by location using the existing search logic
+            }}>
+              <option value="all">All locations</option>
+              {Array.from(new Set(jobs.map(j => j.location).filter(Boolean))).sort().map((l) => <option key={l} value={l!}>{l}</option>)}
             </select>
           </div>
           {(q || type !== "all") && (

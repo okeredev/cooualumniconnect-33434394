@@ -33,16 +33,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        setTimeout(() => fetchRoles(sess.user.id), 0);
+        fetchRoles(sess.user.id).catch(() => {});
       } else {
         setRoles([]);
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session: sess } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) fetchRoles(sess.user.id);
+      try {
+        if (sess?.user) await fetchRoles(sess.user.id);
+      } catch { /* ignore - roles will be empty */ }
+    }).catch(() => {}).finally(() => {
       setLoading(false);
     });
 

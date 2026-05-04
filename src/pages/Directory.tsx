@@ -6,11 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { COOU_DEPARTMENTS, GRAD_YEARS } from "@/data/coou";
-import { Search, MapPin, Briefcase, X, BadgeCheck, Flag, Linkedin, Github, Globe, Loader2, Mail, Phone, MessageCircle, GraduationCap, Building2, Twitter } from "lucide-react";
+import { COUNTRY_NAMES, getStatesForCountry } from "@/data/countries";
+import { Search, MapPin, Briefcase, X, BadgeCheck, Flag, Linkedin, Github, Globe, Loader2, Mail, Phone, MessageCircle, GraduationCap, Building2, Twitter, Facebook, Instagram, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { normalizeUrl } from "@/lib/url";
 
 type Profile = {
   user_id: string;
@@ -18,6 +18,7 @@ type Profile = {
   avatar_url: string | null;
   bio: string | null;
   email: string | null;
+  alt_email: string | null;
   city: string | null;
   state: string | null;
   country: string | null;
@@ -28,6 +29,10 @@ type Profile = {
   github: string | null;
   twitter: string | null;
   website: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  youtube: string | null;
+  tiktok: string | null;
   phone: string | null;
   whatsapp: string | null;
   hide_phone: boolean;
@@ -35,6 +40,11 @@ type Profile = {
 
 type Employment = { user_id: string; company: string; title: string | null; start_date: string | null; end_date: string | null; current: boolean; description: string | null };
 type Education = { user_id: string; school: string; degree: string | null; field: string | null; start_year: number | null; end_year: number | null };
+
+const formatUrl = (url: string | null) => {
+  if (!url) return "#";
+  return url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`;
+};
 
 const DirectoryPage = () => {
   const { user, isAdmin } = useAuth();
@@ -45,34 +55,35 @@ const DirectoryPage = () => {
   const [q, setQ] = useState("");
   const [year, setYear] = useState<string>("all");
   const [dept, setDept] = useState<string>("all");
+  const [state, setState] = useState<string>("all");
+  const [country, setCountry] = useState<string>("all");
   const [reportTarget, setReportTarget] = useState<Profile | null>(null);
   const [reason, setReason] = useState("");
   const [active, setActive] = useState<Profile | null>(null);
 
+  const fetchProfiles = async () => {
+    setLoading(true);
+    const [{ data: ps }, { data: emps }, { data: edus }] = await Promise.all([
+      supabase
+        .from("directory_profiles")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase.from("employment").select("*").order("current", { ascending: false }),
+      supabase.from("education").select("*"),
+    ]);
+    const em: Record<string, Employment[]> = {};
+    (emps ?? []).forEach((e: any) => { (em[e.user_id] ??= []).push(e); });
+    const ed: Record<string, Education[]> = {};
+    (edus ?? []).forEach((e: any) => { (ed[e.user_id] ??= []).push(e); });
+    setProfiles((ps ?? []) as Profile[]);
+    setEmploymentMap(em);
+    setEducationMap(ed);
+    setLoading(false);
+  };
+
   useEffect(() => {
     document.title = "Alumni Directory — COOU Alumni Connect";
-    (async () => {
-      const [{ data: ps }, { data: emps }, { data: edus }] = await Promise.all([
-        // Use the privacy-aware view: phone & whatsapp are masked server-side
-        // when the profile owner has hide_phone enabled and the viewer is not
-        // the owner or an admin.
-        (supabase as any)
-          .from("profiles_public")
-          .select("user_id, display_name, avatar_url, bio, email, city, state, country, department, graduation_year, verified, linkedin, github, twitter, website, phone, whatsapp, hide_phone")
-          .eq("suspended", false)
-          .order("created_at", { ascending: false }),
-        supabase.from("employment").select("user_id, company, title, start_date, end_date, current, description").order("current", { ascending: false }),
-        supabase.from("education").select("user_id, school, degree, field, start_year, end_year"),
-      ]);
-      const em: Record<string, Employment[]> = {};
-      (emps ?? []).forEach((e: any) => { (em[e.user_id] ??= []).push(e); });
-      const ed: Record<string, Education[]> = {};
-      (edus ?? []).forEach((e: any) => { (ed[e.user_id] ??= []).push(e); });
-      setProfiles((ps ?? []) as Profile[]);
-      setEmploymentMap(em);
-      setEducationMap(ed);
-      setLoading(false);
-    })();
+    fetchProfiles();
   }, []);
 
   const results = useMemo(() => profiles.filter((p) => {
@@ -81,11 +92,13 @@ const DirectoryPage = () => {
     if (q && !hay.includes(q.toLowerCase())) return false;
     if (year !== "all" && p.graduation_year !== Number(year)) return false;
     if (dept !== "all" && p.department !== dept) return false;
+    if (state !== "all" && p.state !== state) return false;
+    if (country !== "all" && p.country !== country) return false;
     return true;
-  }), [profiles, employmentMap, q, year, dept]);
+  }), [profiles, employmentMap, q, year, dept, state, country]);
 
-  const reset = () => { setQ(""); setYear("all"); setDept("all"); };
-  const hasFilters = q || year !== "all" || dept !== "all";
+  const reset = () => { setQ(""); setYear("all"); setDept("all"); setState("all"); setCountry("all"); };
+  const hasFilters = q || year !== "all" || dept !== "all" || state !== "all" || country !== "all";
 
   const submitReport = async () => {
     if (!reportTarget || !user || reason.trim().length < 10) {
@@ -109,19 +122,35 @@ const DirectoryPage = () => {
         </div>
 
         <div className="rounded-2xl bg-card border border-border/60 p-4 md:p-5 shadow-card">
-          <div className="grid md:grid-cols-12 gap-3">
-            <div className="md:col-span-6 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+            <div className="lg:col-span-4 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search by name, company, role…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" aria-label="Search alumni" />
+              <Input placeholder="Search by name, company, role…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9 h-11 md:h-10" aria-label="Search alumni" />
             </div>
-            <select aria-label="Graduation year" className="md:col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={year} onChange={(e) => setYear(e.target.value)}>
-              <option value="all">All years</option>
-              {GRAD_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-            </select>
-            <select aria-label="Department" className="md:col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={dept} onChange={(e) => setDept(e.target.value)}>
-              <option value="all">All departments</option>
-              {COOU_DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
+            <div className="lg:col-span-2">
+              <select aria-label="Graduation year" className="flex h-11 md:h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all" value={year} onChange={(e) => setYear(e.target.value)}>
+                <option value="all">All years</option>
+                {GRAD_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <div className="lg:col-span-2">
+              <select aria-label="Department" className="flex h-11 md:h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all" value={dept} onChange={(e) => setDept(e.target.value)}>
+                <option value="all">All departments</option>
+                {COOU_DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+            <div className="lg:col-span-2">
+              <select aria-label="Country" className="flex h-11 md:h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all" value={country} onChange={(e) => { setCountry(e.target.value); setState("all"); }}>
+                <option value="all">All countries</option>
+                {COUNTRY_NAMES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="lg:col-span-2">
+              <select aria-label="State" className="flex h-11 md:h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all" value={state} onChange={(e) => setState(e.target.value)}>
+                <option value="all">All states</option>
+                {(country !== "all" ? getStatesForCountry(country) : Array.from(new Set(profiles.map(p => p.state).filter(Boolean))).sort()).map((s) => <option key={s} value={s!}>{s}</option>)}
+              </select>
+            </div>
           </div>
           {hasFilters && (
             <div className="mt-3 flex items-center justify-between text-sm">
@@ -146,7 +175,7 @@ const DirectoryPage = () => {
                   onClick={() => setActive(a)}
                   onKeyDown={(e) => e.key === "Enter" && setActive(a)}
                   aria-label={`View profile of ${a.display_name ?? "alumni"}`}
-                  className="group cursor-pointer rounded-2xl border border-border/60 bg-card overflow-hidden hover:shadow-elegant transition-all duration-500 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="group cursor-pointer rounded-2xl border border-border/60 bg-card overflow-hidden hover:shadow-elegant transition-all duration-500 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring animate-fade-up"
                 >
                   <div className="h-20 md:h-24 bg-gradient-hero relative grain" />
                   <div className="px-4 md:px-5 pb-5 -mt-10 relative">
@@ -165,9 +194,9 @@ const DirectoryPage = () => {
                       {(a.city || a.state) && <div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">{[a.city, a.state].filter(Boolean).join(", ")}</span></div>}
                     </div>
                     <div className="mt-3 flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
-                      {a.linkedin && <a href={normalizeUrl(a.linkedin)} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary"><Linkedin className="w-4 h-4" /></a>}
-                      {a.github && <a href={normalizeUrl(a.github)} target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-muted-foreground hover:text-primary"><Github className="w-4 h-4" /></a>}
-                      {a.website && <a href={normalizeUrl(a.website)} target="_blank" rel="noopener noreferrer" aria-label="Website" className="text-muted-foreground hover:text-primary"><Globe className="w-4 h-4" /></a>}
+                      {a.linkedin && <a href={formatUrl(a.linkedin)} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary"><Linkedin className="w-4 h-4" /></a>}
+                      {a.github && <a href={formatUrl(a.github)} target="_blank" rel="noreferrer" aria-label="GitHub" className="text-muted-foreground hover:text-primary"><Github className="w-4 h-4" /></a>}
+                      {a.website && <a href={formatUrl(a.website)} target="_blank" rel="noreferrer" aria-label="Website" className="text-muted-foreground hover:text-primary"><Globe className="w-4 h-4" /></a>}
                       <div className="flex-1" />
                       <button onClick={() => setActive(a)} className="text-xs font-medium text-primary hover:text-primary-glow" aria-label={`View ${a.display_name ?? "profile"}`}>View →</button>
                     </div>
@@ -250,12 +279,27 @@ const DirectoryPage = () => {
                   <h4 className="font-display font-semibold text-primary mb-2">Contact & Social</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     {active.email && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary truncate" href={`mailto:${active.email}`}><Mail className="w-4 h-4 flex-shrink-0" /><span className="truncate">{active.email}</span></a>}
-                    {active.phone && (!active.hide_phone || user?.id === active.user_id) && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={`tel:${active.phone}`}><Phone className="w-4 h-4 flex-shrink-0" />{active.phone}</a>}
-                    {active.whatsapp && (!active.hide_phone || user?.id === active.user_id) && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={`https://wa.me/${active.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle className="w-4 h-4 flex-shrink-0" />WhatsApp</a>}
-                    {active.linkedin && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={normalizeUrl(active.linkedin)} target="_blank" rel="noopener noreferrer"><Linkedin className="w-4 h-4 flex-shrink-0" />LinkedIn</a>}
-                    {active.github && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={normalizeUrl(active.github)} target="_blank" rel="noopener noreferrer"><Github className="w-4 h-4 flex-shrink-0" />GitHub</a>}
-                    {active.twitter && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={normalizeUrl(active.twitter)} target="_blank" rel="noopener noreferrer"><Twitter className="w-4 h-4 flex-shrink-0" />X / Twitter</a>}
-                    {active.website && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary truncate" href={normalizeUrl(active.website)} target="_blank" rel="noopener noreferrer"><Globe className="w-4 h-4 flex-shrink-0" /><span className="truncate">Website</span></a>}
+                    {active.alt_email && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary truncate" href={`mailto:${active.alt_email}`}><Mail className="w-4 h-4 flex-shrink-0" /><span className="truncate">{active.alt_email} (Alt)</span></a>}
+                    {active.phone && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="w-4 h-4 flex-shrink-0" />
+                        {active.hide_phone ? "••••••••••" : <a href={`tel:${active.phone}`} className="hover:text-primary">{active.phone}</a>}
+                      </div>
+                    )}
+                    {active.whatsapp && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MessageCircle className="w-4 h-4 flex-shrink-0" />
+                        {active.hide_phone ? "Hidden" : <a href={`https://wa.me/${active.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" className="hover:text-primary">WhatsApp</a>}
+                      </div>
+                    )}
+                    {active.linkedin && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={formatUrl(active.linkedin)} target="_blank" rel="noreferrer"><Linkedin className="w-4 h-4 flex-shrink-0" />LinkedIn</a>}
+                    {active.github && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={formatUrl(active.github)} target="_blank" rel="noreferrer"><Github className="w-4 h-4 flex-shrink-0" />GitHub</a>}
+                    {active.twitter && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={formatUrl(active.twitter)} target="_blank" rel="noreferrer"><Twitter className="w-4 h-4 flex-shrink-0" />X / Twitter</a>}
+                    {active.facebook && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={formatUrl(active.facebook)} target="_blank" rel="noreferrer"><Facebook className="w-4 h-4 flex-shrink-0" />Facebook</a>}
+                    {active.instagram && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={formatUrl(active.instagram)} target="_blank" rel="noreferrer"><Instagram className="w-4 h-4 flex-shrink-0" />Instagram</a>}
+                    {active.youtube && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={formatUrl(active.youtube)} target="_blank" rel="noreferrer"><Youtube className="w-4 h-4 flex-shrink-0" />YouTube</a>}
+                    {active.tiktok && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary" href={formatUrl(active.tiktok)} target="_blank" rel="noreferrer"><span className="w-4 h-4 flex items-center justify-center font-bold text-[10px]">TT</span>TikTok</a>}
+                    {active.website && <a className="flex items-center gap-2 text-muted-foreground hover:text-primary truncate" href={formatUrl(active.website)} target="_blank" rel="noreferrer"><Globe className="w-4 h-4 flex-shrink-0" /><span className="truncate">Website</span></a>}
                   </div>
                 </section>
 
