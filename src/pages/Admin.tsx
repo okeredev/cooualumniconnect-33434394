@@ -742,6 +742,27 @@ const UsersTab = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Uploaded Documents (passport, IDs, supporting files) */}
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><FileCheck className="w-3.5 h-3.5" /> Uploaded Documents</Label>
+                  <div className="mt-1 space-y-2">
+                    {userDocs.length > 0 ? userDocs.map((d) => (
+                      <div key={d.name} className="rounded-xl border border-border/60 p-3 bg-muted/20 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium truncate">{d.name}</div>
+                          {d.created_at && <div className="text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleString()}</div>}
+                          {d.url.match(/\.(jpg|jpeg|png|gif|webp)/i) && (
+                            <img src={d.url} alt="" className="mt-2 max-h-40 rounded-lg border border-border/40 object-contain" />
+                          )}
+                        </div>
+                        <a href={d.url} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline font-medium flex-shrink-0">View / Download ↗</a>
+                      </div>
+                    )) : (
+                      <div className="text-xs text-muted-foreground py-2 text-center border border-dashed rounded-xl">No documents uploaded.</div>
+                    )}
+                  </div>
+                </div>
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => { setResetTarget(detail); setDetail(null); }}><KeyRound className="w-4 h-4" /> Reset password</Button>
