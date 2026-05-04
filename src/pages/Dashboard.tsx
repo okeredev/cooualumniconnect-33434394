@@ -739,6 +739,78 @@ const DashboardPage = () => {
   );
 };
 
+const DocumentsSection = () => {
+  const { user } = useAuth();
+  const [docs, setDocs] = useState<{ name: string; url: string; created_at?: string }[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = async () => {
+    if (!user) return;
+    const { data } = await supabase.storage.from("documents").list(user.id, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+    const filtered = (data ?? []).filter((f: any) => f.name && f.name !== ".emptyFolderPlaceholder");
+    const list: { name: string; url: string; created_at?: string }[] = [];
+    for (const f of filtered) {
+      const { data: signed } = await supabase.storage.from("documents").createSignedUrl(`${user.id}/${f.name}`, 3600);
+      if (signed?.signedUrl) list.push({ name: f.name, url: signed.signedUrl, created_at: (f as any).created_at });
+    }
+    setDocs(list);
+  };
+  useEffect(() => { refresh(); }, [user]);
+
+  const upload = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB per document"); return; }
+    setBusy(true);
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${user.id}/${Date.now()}-${safe}`;
+    const { error } = await supabase.storage.from("documents").upload(path, file);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Document uploaded — admin will review");
+    refresh();
+  };
+
+  const remove = async (name: string) => {
+    if (!user) return;
+    if (!confirm("Delete this document?")) return;
+    await supabase.storage.from("documents").remove([`${user.id}/${name}`]);
+    refresh();
+  };
+
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 p-6 md:p-8 space-y-4 shadow-card animate-fade-up" style={{ animationDelay: '0.15s' }}>
+      <div className="flex items-center justify-between border-b border-border/60 pb-3">
+        <div>
+          <h3 className="font-display font-semibold text-lg text-primary">Supporting Documents</h3>
+          <p className="text-xs text-muted-foreground mt-1">Upload passport photo, ID card, or other supporting files for admin review.</p>
+        </div>
+        <label className="cursor-pointer">
+          <input type="file" hidden accept="image/*,.pdf,.doc,.docx" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors">
+            {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+            {busy ? "Uploading..." : "Upload Document"}
+          </span>
+        </label>
+      </div>
+      <div className="space-y-2">
+        {docs.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-6 border border-dashed rounded-xl text-center">No documents uploaded yet.</p>
+        ) : docs.map((d) => (
+          <div key={d.name} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 p-3 bg-muted/20">
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">{d.name.split("-").slice(1).join("-") || d.name}</div>
+              {d.created_at && <div className="text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleString()}</div>}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <a href={d.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline font-medium">View ↗</a>
+              <button onClick={() => remove(d.name)} className="text-muted-foreground hover:text-destructive p-1"><Trash2 className="w-3.5 h-3.5" /></button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div>
     <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
