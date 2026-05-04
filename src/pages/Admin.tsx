@@ -309,6 +309,7 @@ const UsersTab = () => {
   const [resetting, setResetting] = useState(false);
   const [detail, setDetail] = useState<FullProfile | null>(null);
   const [userCerts, setUserCerts] = useState<any[]>([]);
+  const [userDocs, setUserDocs] = useState<{ name: string; url: string; created_at?: string }[]>([]);
   const [userEdu, setUserEdu] = useState<any[]>([]);
   const [userEmp, setUserEmp] = useState<any[]>([]);
   const [sort, setSort] = useState<{ key: keyof FullProfile; dir: 'asc' | 'desc' }>({ key: 'created_at', dir: 'desc' });
