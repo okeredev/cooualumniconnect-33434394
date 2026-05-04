@@ -1115,15 +1115,46 @@ const DonationsTab = () => {
 const MentorshipTab = () => {
   const [mentors, setMentors] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
+  const [profilesById, setProfilesById] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const load = async () => {
     const [m, r] = await Promise.all([
       supabase.from("mentor_profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("mentorship_requests").select("*").order("created_at", { ascending: false }),
     ]);
-    setMentors(m.data ?? []); setRequests(r.data ?? []); setLoading(false);
+    const ms = m.data ?? []; const rs = r.data ?? [];
+    setMentors(ms); setRequests(rs);
+    const ids = Array.from(new Set([
+      ...ms.map((x: any) => x.user_id),
+      ...rs.map((x: any) => x.mentor_id),
+      ...rs.map((x: any) => x.mentee_id),
+    ].filter(Boolean)));
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles")
+        .select("user_id, display_name, email, phone, coou_id, graduation_year, avatar_url, department")
+        .in("user_id", ids);
+      const map: Record<string, any> = {};
+      (profs ?? []).forEach((p: any) => { map[p.user_id] = p; });
+      setProfilesById(map);
+    }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  const UserCell = ({ id }: { id?: string | null }) => {
+    if (!id) return <span className="text-muted-foreground">—</span>;
+    const p = profilesById[id];
+    return (
+      <div className="flex items-center gap-2 min-w-[180px]">
+        {p?.avatar_url ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{(p?.display_name || "?").slice(0,1).toUpperCase()}</div>}
+        <div className="min-w-0">
+          <div className="text-xs font-medium truncate">{p?.display_name || "Unknown"}</div>
+          <div className="text-[10px] text-muted-foreground truncate">{p?.email || id.slice(0,8)+"…"}</div>
+          {p?.coou_id && <div className="text-[10px] text-gold font-mono">{p.coou_id}</div>}
+        </div>
+      </div>
+    );
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
   const accepted = requests.filter((r) => r.status === "accepted").length;
@@ -1142,17 +1173,36 @@ const MentorshipTab = () => {
         <h3 className="font-semibold mb-2">Mentors</h3>
         <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="text-left p-3">User</th><th className="text-left p-3">Topics</th><th className="text-left p-3">Capacity</th><th className="text-left p-3">Available</th></tr></thead>
+            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="text-left p-3">Mentor</th><th className="text-left p-3">Topics</th><th className="text-left p-3">Capacity</th><th className="text-left p-3">Available</th></tr></thead>
             <tbody>
               {mentors.map((m) => (
                 <tr key={m.id} className="border-t border-border/60">
-                  <td className="p-3 text-xs"><code>{m.user_id.slice(0, 8)}…</code></td>
+                  <td className="p-3"><UserCell id={m.user_id} /></td>
                   <td className="p-3 text-muted-foreground">{(m.topics ?? []).join(", ") || "—"}</td>
                   <td className="p-3">{m.capacity}</td>
                   <td className="p-3">{m.available ? "Yes" : "No"}</td>
                 </tr>
               ))}
               {mentors.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No mentors yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3 className="font-semibold mb-2 mt-4">Mentorship Requests</h3>
+        <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="text-left p-3">Mentee</th><th className="text-left p-3">Mentor</th><th className="text-left p-3">Status</th><th className="text-left p-3">Date</th></tr></thead>
+            <tbody>
+              {requests.map((r) => (
+                <tr key={r.id} className="border-t border-border/60">
+                  <td className="p-3"><UserCell id={r.mentee_id} /></td>
+                  <td className="p-3"><UserCell id={r.mentor_id} /></td>
+                  <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${r.status === "accepted" ? "bg-green-100 text-green-800" : r.status === "rejected" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{r.status}</span></td>
+                  <td className="p-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
+                </tr>
+              ))}
+              {requests.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No requests yet.</td></tr>}
             </tbody>
           </table>
         </div>
