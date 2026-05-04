@@ -611,7 +611,12 @@ const UsersTab = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <DetailRow label="Department" value={detail.department} />
                   <DetailRow label="Graduation year" value={detail.graduation_year} />
-                  <DetailRow label="COOU ID" value={<span className="text-gold font-bold">{detail.coou_id || "Pending"}</span>} />
+                  <DetailRow label="COOU ID" value={
+                    <span className="inline-flex items-center gap-2">
+                      <span className="text-gold font-bold">{detail.coou_id || "Pending"}</span>
+                      <button onClick={() => generateCoouId(detail)} className="text-[10px] px-1.5 py-0.5 rounded bg-muted hover:bg-muted/70 text-muted-foreground" title="Regenerate using graduation year">↻</button>
+                    </span>
+                  } />
                   <DetailRow label="Matric Number" value={detail.matric_number || "—"} />
                   <DetailRow label="Phone" value={detail.phone || "—"} />
                   <DetailRow label="WhatsApp" value={detail.whatsapp || "—"} />
