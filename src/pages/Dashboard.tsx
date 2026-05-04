@@ -730,7 +730,6 @@ const DashboardPage = () => {
             {/* Supporting Documents Section */}
             <DocumentsSection />
           </div>
-          </div>
         </div>
         <div className="mt-12">
           <Newsletter />
