@@ -341,12 +341,14 @@ const UsersTab = () => {
     setUserCerts(c.data ?? []);
     setUserEdu(edu.data ?? []);
     setUserEmp(emp.data ?? []);
-    // Documents bucket (admins can list)
+    // Documents bucket (private; admins can list & sign)
     const { data: docs } = await supabase.storage.from("documents").list(p.user_id, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
-    const docList = (docs ?? []).filter((f: any) => f.name).map((f: any) => {
-      const { data: { publicUrl } } = supabase.storage.from("documents").getPublicUrl(`${p.user_id}/${f.name}`);
-      return { name: f.name, url: publicUrl, created_at: f.created_at };
-    });
+    const filtered = (docs ?? []).filter((f: any) => f.name && f.name !== ".emptyFolderPlaceholder");
+    const docList: { name: string; url: string; created_at?: string }[] = [];
+    for (const f of filtered) {
+      const { data: signed } = await supabase.storage.from("documents").createSignedUrl(`${p.user_id}/${f.name}`, 3600);
+      if (signed?.signedUrl) docList.push({ name: f.name, url: signed.signedUrl, created_at: (f as any).created_at });
+    }
     setUserDocs(docList);
   };
 
