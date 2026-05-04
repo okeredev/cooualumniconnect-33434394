@@ -55,11 +55,18 @@ const AdminPage = () => {
 
   return (
     <AppShell>
-      <section className="container py-10">
-        <div className="mb-8">
-          <div className="text-xs uppercase tracking-[0.2em] text-gold font-semibold mb-2">Administration</div>
-          <h1 className="font-display text-3xl md:text-4xl font-semibold text-primary">Admin Control Panel</h1>
-          <p className="text-muted-foreground mt-2">Manage users, roles, content, and review platform analytics.</p>
+      <section className="container py-8 md:py-10">
+        <div className="mb-8 rounded-2xl border border-border/60 bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground p-6 md:p-8 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.25em] text-gold font-semibold mb-1.5">Administration · Control Panel</div>
+              <h1 className="font-display text-2xl md:text-4xl font-semibold">Admin Dashboard</h1>
+              <p className="text-primary-foreground/80 mt-2 text-sm md:text-base">Manage members, content, verifications, and platform analytics in one place.</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="px-3 py-1.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/20">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="analytics">
