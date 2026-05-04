@@ -1021,10 +1021,22 @@ const ReportsTab = () => {
 // -------- Donations --------
 const DonationsTab = () => {
   const [items, setItems] = useState<any[]>([]);
+  const [profilesById, setProfilesById] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const load = async () => {
     const { data } = await supabase.from("donations").select("*").order("created_at", { ascending: false });
-    setItems(data ?? []); setLoading(false);
+    const list = data ?? [];
+    setItems(list);
+    const ids = Array.from(new Set(list.map((d: any) => d.user_id).filter(Boolean)));
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles")
+        .select("user_id, display_name, email, phone, coou_id, graduation_year, avatar_url")
+        .in("user_id", ids);
+      const map: Record<string, any> = {};
+      (profs ?? []).forEach((p: any) => { map[p.user_id] = p; });
+      setProfilesById(map);
+    }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
