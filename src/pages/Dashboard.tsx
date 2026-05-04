@@ -726,6 +726,10 @@ const DashboardPage = () => {
                 {employment.length === 0 && <p className="text-sm text-muted-foreground py-4 border border-dashed rounded-xl text-center">No employment added yet. Please add your professional experience.</p>}
               </div>
             </div>
+
+            {/* Supporting Documents Section */}
+            <DocumentsSection />
+          </div>
           </div>
         </div>
         <div className="mt-12">
