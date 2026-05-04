@@ -49,6 +49,36 @@ export type Database = {
           },
         ]
       }
+      certificate_uploads: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_url: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_url: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_url?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_channel_members: {
         Row: {
           channel_id: string
@@ -110,6 +140,8 @@ export type Database = {
           channel_id: string | null
           content: string
           created_at: string
+          file_type: string | null
+          file_url: string | null
           id: string
           recipient_id: string | null
           sender_id: string
@@ -118,6 +150,8 @@ export type Database = {
           channel_id?: string | null
           content: string
           created_at?: string
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           recipient_id?: string | null
           sender_id: string
@@ -126,6 +160,8 @@ export type Database = {
           channel_id?: string | null
           content?: string
           created_at?: string
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           recipient_id?: string | null
           sender_id?: string
@@ -235,6 +271,123 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      election_candidates: {
+        Row: {
+          created_at: string | null
+          election_id: string | null
+          id: string
+          image_url: string | null
+          manifesto: string | null
+          name: string
+          position: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          election_id?: string | null
+          id?: string
+          image_url?: string | null
+          manifesto?: string | null
+          name: string
+          position: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          election_id?: string | null
+          id?: string
+          image_url?: string | null
+          manifesto?: string | null
+          name?: string
+          position?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "election_candidates_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "election_candidates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "directory_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "election_candidates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "election_candidates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      elections: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          id: string
+          starts_at: string
+          title: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          ends_at: string
+          id?: string
+          starts_at: string
+          title: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string
+          id?: string
+          starts_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elections_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "directory_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "elections_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "elections_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       employment: {
         Row: {
@@ -457,6 +610,73 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_broadcasts: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          subject: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          subject: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_broadcasts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "directory_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "newsletter_broadcasts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "newsletter_broadcasts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      newsletter_subscribers: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -469,11 +689,13 @@ export type Database = {
           certificate_status: string
           certificate_url: string | null
           city: string | null
+          coou_id: string | null
           country: string | null
           created_at: string
           current_address: string | null
           date_of_birth: string | null
           department: string | null
+          directory_approved: boolean | null
           display_name: string | null
           email: string | null
           facebook: string | null
@@ -484,8 +706,11 @@ export type Database = {
           instagram: string | null
           last_seen_at: string | null
           linkedin: string | null
+          matric_number: string | null
+          nationality: string | null
           phone: string | null
           state: string | null
+          state_of_origin: string | null
           suspended: boolean
           telegram: string | null
           tiktok: string | null
@@ -494,6 +719,7 @@ export type Database = {
           user_id: string
           verified: boolean
           website: string | null
+          welcome_seen: boolean | null
           whatsapp: string | null
           youtube: string | null
         }
@@ -508,11 +734,13 @@ export type Database = {
           certificate_status?: string
           certificate_url?: string | null
           city?: string | null
+          coou_id?: string | null
           country?: string | null
           created_at?: string
           current_address?: string | null
           date_of_birth?: string | null
           department?: string | null
+          directory_approved?: boolean | null
           display_name?: string | null
           email?: string | null
           facebook?: string | null
@@ -523,8 +751,11 @@ export type Database = {
           instagram?: string | null
           last_seen_at?: string | null
           linkedin?: string | null
+          matric_number?: string | null
+          nationality?: string | null
           phone?: string | null
           state?: string | null
+          state_of_origin?: string | null
           suspended?: boolean
           telegram?: string | null
           tiktok?: string | null
@@ -533,6 +764,7 @@ export type Database = {
           user_id: string
           verified?: boolean
           website?: string | null
+          welcome_seen?: boolean | null
           whatsapp?: string | null
           youtube?: string | null
         }
@@ -547,11 +779,13 @@ export type Database = {
           certificate_status?: string
           certificate_url?: string | null
           city?: string | null
+          coou_id?: string | null
           country?: string | null
           created_at?: string
           current_address?: string | null
           date_of_birth?: string | null
           department?: string | null
+          directory_approved?: boolean | null
           display_name?: string | null
           email?: string | null
           facebook?: string | null
@@ -562,8 +796,11 @@ export type Database = {
           instagram?: string | null
           last_seen_at?: string | null
           linkedin?: string | null
+          matric_number?: string | null
+          nationality?: string | null
           phone?: string | null
           state?: string | null
+          state_of_origin?: string | null
           suspended?: boolean
           telegram?: string | null
           tiktok?: string | null
@@ -572,6 +809,7 @@ export type Database = {
           user_id?: string
           verified?: boolean
           website?: string | null
+          welcome_seen?: boolean | null
           whatsapp?: string | null
           youtube?: string | null
         }
@@ -613,6 +851,123 @@ export type Database = {
         }
         Relationships: []
       }
+      support_campaigns: {
+        Row: {
+          active: boolean | null
+          category: string
+          created_at: string | null
+          created_by: string | null
+          description: string
+          id: string
+          raised_amount: number | null
+          target_amount: number | null
+          title: string
+        }
+        Insert: {
+          active?: boolean | null
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          id?: string
+          raised_amount?: number | null
+          target_amount?: number | null
+          title: string
+        }
+        Update: {
+          active?: boolean | null
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          id?: string
+          raised_amount?: number | null
+          target_amount?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "directory_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "support_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "support_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      support_pledges: {
+        Row: {
+          amount: number
+          campaign_id: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          campaign_id?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_pledges_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "support_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_pledges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "directory_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "support_pledges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "support_pledges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -634,8 +989,155 @@ export type Database = {
         }
         Relationships: []
       }
+      votes: {
+        Row: {
+          candidate_id: string | null
+          created_at: string | null
+          election_id: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          candidate_id?: string | null
+          created_at?: string | null
+          election_id?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          candidate_id?: string | null
+          created_at?: string | null
+          election_id?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "election_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "directory_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
+      directory_profiles: {
+        Row: {
+          alt_email: string | null
+          avatar_url: string | null
+          bio: string | null
+          city: string | null
+          coou_id: string | null
+          country: string | null
+          created_at: string | null
+          department: string | null
+          display_name: string | null
+          email: string | null
+          facebook: string | null
+          github: string | null
+          graduation_year: number | null
+          hide_phone: boolean | null
+          instagram: string | null
+          linkedin: string | null
+          phone: string | null
+          state: string | null
+          suspended: boolean | null
+          tiktok: string | null
+          twitter: string | null
+          user_id: string | null
+          verified: boolean | null
+          website: string | null
+          whatsapp: string | null
+          youtube: string | null
+        }
+        Insert: {
+          alt_email?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          coou_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          facebook?: string | null
+          github?: string | null
+          graduation_year?: number | null
+          hide_phone?: boolean | null
+          instagram?: string | null
+          linkedin?: string | null
+          phone?: string | null
+          state?: string | null
+          suspended?: boolean | null
+          tiktok?: string | null
+          twitter?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+          website?: string | null
+          whatsapp?: string | null
+          youtube?: string | null
+        }
+        Update: {
+          alt_email?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          coou_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          facebook?: string | null
+          github?: string | null
+          graduation_year?: number | null
+          hide_phone?: boolean | null
+          instagram?: string | null
+          linkedin?: string | null
+          phone?: string | null
+          state?: string | null
+          suspended?: boolean | null
+          tiktok?: string | null
+          twitter?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+          website?: string | null
+          whatsapp?: string | null
+          youtube?: string | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           address: string | null
