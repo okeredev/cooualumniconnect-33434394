@@ -1078,7 +1078,19 @@ const DonationsTab = () => {
             {items.map((d) => (
               <tr key={d.id} className={`border-t border-border/60 ${sel.selected.has(d.id) ? "bg-muted/40" : ""}`}>
                 <td className="p-3"><input type="checkbox" checked={sel.selected.has(d.id)} onChange={() => sel.toggleOne(d.id)} /></td>
-                <td className="p-3 text-xs"><code>{d.user_id.slice(0, 8)}…</code><div className="text-[11px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</div></td>
+                <td className="p-3 text-xs">
+                  {(() => { const p = profilesById[d.user_id]; return (
+                    <div className="flex items-center gap-2 min-w-[180px]">
+                      {p?.avatar_url ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{(p?.display_name || "?").slice(0,1).toUpperCase()}</div>}
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{p?.display_name || "Unknown user"}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{p?.email || d.user_id.slice(0,8)+"…"}</div>
+                        {p?.coou_id && <div className="text-[10px] text-gold font-mono">{p.coou_id}</div>}
+                        <div className="text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                  ); })()}
+                </td>
                 <td className="p-3 font-medium">{d.currency} {Number(d.amount).toLocaleString()}</td>
                 <td className="p-3 text-muted-foreground">{d.purpose || "—"}</td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${d.status === "fulfilled" ? "bg-green-100 text-green-800" : d.status === "cancelled" ? "bg-muted text-muted-foreground" : "bg-amber-100 text-amber-800"}`}>{d.status}</span></td>
