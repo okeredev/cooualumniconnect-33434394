@@ -55,11 +55,18 @@ const AdminPage = () => {
 
   return (
     <AppShell>
-      <section className="container py-10">
-        <div className="mb-8">
-          <div className="text-xs uppercase tracking-[0.2em] text-gold font-semibold mb-2">Administration</div>
-          <h1 className="font-display text-3xl md:text-4xl font-semibold text-primary">Admin Control Panel</h1>
-          <p className="text-muted-foreground mt-2">Manage users, roles, content, and review platform analytics.</p>
+      <section className="container py-8 md:py-10">
+        <div className="mb-8 rounded-2xl border border-border/60 bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground p-6 md:p-8 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.25em] text-gold font-semibold mb-1.5">Administration · Control Panel</div>
+              <h1 className="font-display text-2xl md:text-4xl font-semibold">Admin Dashboard</h1>
+              <p className="text-primary-foreground/80 mt-2 text-sm md:text-base">Manage members, content, verifications, and platform analytics in one place.</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="px-3 py-1.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/20">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="analytics">
@@ -309,6 +316,7 @@ const UsersTab = () => {
   const [resetting, setResetting] = useState(false);
   const [detail, setDetail] = useState<FullProfile | null>(null);
   const [userCerts, setUserCerts] = useState<any[]>([]);
+  const [userDocs, setUserDocs] = useState<{ name: string; url: string; created_at?: string }[]>([]);
   const [userEdu, setUserEdu] = useState<any[]>([]);
   const [userEmp, setUserEmp] = useState<any[]>([]);
   const [sort, setSort] = useState<{ key: keyof FullProfile; dir: 'asc' | 'desc' }>({ key: 'created_at', dir: 'desc' });
@@ -340,6 +348,15 @@ const UsersTab = () => {
     setUserCerts(c.data ?? []);
     setUserEdu(edu.data ?? []);
     setUserEmp(emp.data ?? []);
+    // Documents bucket (private; admins can list & sign)
+    const { data: docs } = await supabase.storage.from("documents").list(p.user_id, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+    const filtered = (docs ?? []).filter((f: any) => f.name && f.name !== ".emptyFolderPlaceholder");
+    const docList: { name: string; url: string; created_at?: string }[] = [];
+    for (const f of filtered) {
+      const { data: signed } = await supabase.storage.from("documents").createSignedUrl(`${p.user_id}/${f.name}`, 3600);
+      if (signed?.signedUrl) docList.push({ name: f.name, url: signed.signedUrl, created_at: (f as any).created_at });
+    }
+    setUserDocs(docList);
   };
 
   const toggleVerify = async (p: FullProfile) => {
@@ -611,7 +628,12 @@ const UsersTab = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <DetailRow label="Department" value={detail.department} />
                   <DetailRow label="Graduation year" value={detail.graduation_year} />
-                  <DetailRow label="COOU ID" value={<span className="text-gold font-bold">{detail.coou_id || "Pending"}</span>} />
+                  <DetailRow label="COOU ID" value={
+                    <span className="inline-flex items-center gap-2">
+                      <span className="text-gold font-bold">{detail.coou_id || "Pending"}</span>
+                      <button onClick={() => generateCoouId(detail)} className="text-[10px] px-1.5 py-0.5 rounded bg-muted hover:bg-muted/70 text-muted-foreground" title="Regenerate using graduation year">↻</button>
+                    </span>
+                  } />
                   <DetailRow label="Matric Number" value={detail.matric_number || "—"} />
                   <DetailRow label="Phone" value={detail.phone || "—"} />
                   <DetailRow label="WhatsApp" value={detail.whatsapp || "—"} />
@@ -724,6 +746,27 @@ const UsersTab = () => {
                       </div>
                     )) : (
                       <div className="text-xs text-muted-foreground py-2 text-center border border-dashed rounded-xl">No employment records.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Uploaded Documents (passport, IDs, supporting files) */}
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><FileCheck className="w-3.5 h-3.5" /> Uploaded Documents</Label>
+                  <div className="mt-1 space-y-2">
+                    {userDocs.length > 0 ? userDocs.map((d) => (
+                      <div key={d.name} className="rounded-xl border border-border/60 p-3 bg-muted/20 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium truncate">{d.name}</div>
+                          {d.created_at && <div className="text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleString()}</div>}
+                          {d.url.match(/\.(jpg|jpeg|png|gif|webp)/i) && (
+                            <img src={d.url} alt="" className="mt-2 max-h-40 rounded-lg border border-border/40 object-contain" />
+                          )}
+                        </div>
+                        <a href={d.url} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline font-medium flex-shrink-0">View / Download ↗</a>
+                      </div>
+                    )) : (
+                      <div className="text-xs text-muted-foreground py-2 text-center border border-dashed rounded-xl">No documents uploaded.</div>
                     )}
                   </div>
                 </div>
@@ -1021,10 +1064,22 @@ const ReportsTab = () => {
 // -------- Donations --------
 const DonationsTab = () => {
   const [items, setItems] = useState<any[]>([]);
+  const [profilesById, setProfilesById] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const load = async () => {
     const { data } = await supabase.from("donations").select("*").order("created_at", { ascending: false });
-    setItems(data ?? []); setLoading(false);
+    const list = data ?? [];
+    setItems(list);
+    const ids = Array.from(new Set(list.map((d: any) => d.user_id).filter(Boolean)));
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles")
+        .select("user_id, display_name, email, phone, coou_id, graduation_year, avatar_url")
+        .in("user_id", ids);
+      const map: Record<string, any> = {};
+      (profs ?? []).forEach((p: any) => { map[p.user_id] = p; });
+      setProfilesById(map);
+    }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
@@ -1066,7 +1121,19 @@ const DonationsTab = () => {
             {items.map((d) => (
               <tr key={d.id} className={`border-t border-border/60 ${sel.selected.has(d.id) ? "bg-muted/40" : ""}`}>
                 <td className="p-3"><input type="checkbox" checked={sel.selected.has(d.id)} onChange={() => sel.toggleOne(d.id)} /></td>
-                <td className="p-3 text-xs"><code>{d.user_id.slice(0, 8)}…</code><div className="text-[11px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</div></td>
+                <td className="p-3 text-xs">
+                  {(() => { const p = profilesById[d.user_id]; return (
+                    <div className="flex items-center gap-2 min-w-[180px]">
+                      {p?.avatar_url ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{(p?.display_name || "?").slice(0,1).toUpperCase()}</div>}
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{p?.display_name || "Unknown user"}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{p?.email || d.user_id.slice(0,8)+"…"}</div>
+                        {p?.coou_id && <div className="text-[10px] text-gold font-mono">{p.coou_id}</div>}
+                        <div className="text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                  ); })()}
+                </td>
                 <td className="p-3 font-medium">{d.currency} {Number(d.amount).toLocaleString()}</td>
                 <td className="p-3 text-muted-foreground">{d.purpose || "—"}</td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${d.status === "fulfilled" ? "bg-green-100 text-green-800" : d.status === "cancelled" ? "bg-muted text-muted-foreground" : "bg-amber-100 text-amber-800"}`}>{d.status}</span></td>
@@ -1091,15 +1158,46 @@ const DonationsTab = () => {
 const MentorshipTab = () => {
   const [mentors, setMentors] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
+  const [profilesById, setProfilesById] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const load = async () => {
     const [m, r] = await Promise.all([
       supabase.from("mentor_profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("mentorship_requests").select("*").order("created_at", { ascending: false }),
     ]);
-    setMentors(m.data ?? []); setRequests(r.data ?? []); setLoading(false);
+    const ms = m.data ?? []; const rs = r.data ?? [];
+    setMentors(ms); setRequests(rs);
+    const ids = Array.from(new Set([
+      ...ms.map((x: any) => x.user_id),
+      ...rs.map((x: any) => x.mentor_id),
+      ...rs.map((x: any) => x.mentee_id),
+    ].filter(Boolean)));
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles")
+        .select("user_id, display_name, email, phone, coou_id, graduation_year, avatar_url, department")
+        .in("user_id", ids);
+      const map: Record<string, any> = {};
+      (profs ?? []).forEach((p: any) => { map[p.user_id] = p; });
+      setProfilesById(map);
+    }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  const UserCell = ({ id }: { id?: string | null }) => {
+    if (!id) return <span className="text-muted-foreground">—</span>;
+    const p = profilesById[id];
+    return (
+      <div className="flex items-center gap-2 min-w-[180px]">
+        {p?.avatar_url ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{(p?.display_name || "?").slice(0,1).toUpperCase()}</div>}
+        <div className="min-w-0">
+          <div className="text-xs font-medium truncate">{p?.display_name || "Unknown"}</div>
+          <div className="text-[10px] text-muted-foreground truncate">{p?.email || id.slice(0,8)+"…"}</div>
+          {p?.coou_id && <div className="text-[10px] text-gold font-mono">{p.coou_id}</div>}
+        </div>
+      </div>
+    );
+  };
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
   const accepted = requests.filter((r) => r.status === "accepted").length;
@@ -1118,17 +1216,36 @@ const MentorshipTab = () => {
         <h3 className="font-semibold mb-2">Mentors</h3>
         <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="text-left p-3">User</th><th className="text-left p-3">Topics</th><th className="text-left p-3">Capacity</th><th className="text-left p-3">Available</th></tr></thead>
+            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="text-left p-3">Mentor</th><th className="text-left p-3">Topics</th><th className="text-left p-3">Capacity</th><th className="text-left p-3">Available</th></tr></thead>
             <tbody>
               {mentors.map((m) => (
                 <tr key={m.id} className="border-t border-border/60">
-                  <td className="p-3 text-xs"><code>{m.user_id.slice(0, 8)}…</code></td>
+                  <td className="p-3"><UserCell id={m.user_id} /></td>
                   <td className="p-3 text-muted-foreground">{(m.topics ?? []).join(", ") || "—"}</td>
                   <td className="p-3">{m.capacity}</td>
                   <td className="p-3">{m.available ? "Yes" : "No"}</td>
                 </tr>
               ))}
               {mentors.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No mentors yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3 className="font-semibold mb-2 mt-4">Mentorship Requests</h3>
+        <div className="rounded-2xl border border-border/60 bg-card overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="text-left p-3">Mentee</th><th className="text-left p-3">Mentor</th><th className="text-left p-3">Status</th><th className="text-left p-3">Date</th></tr></thead>
+            <tbody>
+              {requests.map((r) => (
+                <tr key={r.id} className="border-t border-border/60">
+                  <td className="p-3"><UserCell id={r.mentee_id} /></td>
+                  <td className="p-3"><UserCell id={r.mentor_id} /></td>
+                  <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs ${r.status === "accepted" ? "bg-green-100 text-green-800" : r.status === "rejected" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{r.status}</span></td>
+                  <td className="p-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
+                </tr>
+              ))}
+              {requests.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No requests yet.</td></tr>}
             </tbody>
           </table>
         </div>
