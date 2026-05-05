@@ -1559,7 +1559,7 @@ const VerificationsTab = () => {
   useEffect(() => { load(); }, []);
 
   const decide = async (id: string, userId: string, status: 'verified' | 'rejected') => {
-    const { error } = await supabase.from("certificate_uploads").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    const { error } = await supabase.from("certificate_uploads").update({ status } as any).eq("id", id);
     if (error) {
       toast.error(error.message);
     } else {
