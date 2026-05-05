@@ -1702,7 +1702,7 @@ const ElectionsTab = () => {
   useEffect(() => { loadElections(); }, []);
 
   const saveElection = async (e: any) => {
-    const payload = { title: e.title, description: e.description, starts_at: e.starts_at, ends_at: e.ends_at, status: e.status };
+    const payload: any = { title: e.title, description: e.description, starts_at: e.starts_at, ends_at: e.ends_at, active: e.active ?? true };
     const { error } = e.id 
       ? await supabase.from("elections").update(payload).eq("id", e.id)
       : await supabase.from("elections").insert(payload);
