@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BadgeCheck, Ban, Shield, ShieldOff, Trash2, Plus, Pencil, Users, Briefcase, Calendar, Flag, BarChart3, Loader2, Download, Check, X as XIcon, Clock, Heart, GraduationCap, BookOpen, Upload, KeyRound, Eye, FileCheck, Linkedin, Github, Twitter, Facebook, Instagram, Youtube, Globe } from "lucide-react";
+import { BadgeCheck, Ban, Shield, ShieldOff, Trash2, Plus, Pencil, Users, Briefcase, Calendar, Flag, BarChart3, Loader2, Download, Check, X as XIcon, Clock, Heart, GraduationCap, BookOpen, Upload, KeyRound, Eye, FileCheck, Linkedin, Github, Twitter, Facebook, Instagram, Youtube, Globe, ShieldCheck, Vote, CalendarClock, ChevronRight } from "lucide-react";
 import { downloadCsv } from "@/lib/csv";
 import { COUNTRY_NAMES, getStatesForCountry } from "@/data/countries";
 
@@ -50,18 +50,66 @@ type Job = { id: string; title: string; company: string; location: string | null
 type Event = { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string | null; image_url: string | null };
 type Report = { id: string; reporter_id: string; reported_user_id: string; reason: string; resolved: boolean; created_at: string };
 
+const ADMIN_SECTIONS = [
+  { group: "Overview", items: [
+    { key: "analytics", label: "Analytics", icon: BarChart3, desc: "Platform statistics" },
+  ]},
+  { group: "People", items: [
+    { key: "users", label: "Users", icon: Users, desc: "Manage members" },
+    { key: "verifications", label: "Verifications", icon: ShieldCheck, desc: "Review certificates" },
+  ]},
+  { group: "Content", items: [
+    { key: "jobs", label: "Jobs", icon: Briefcase, desc: "Job listings" },
+    { key: "events", label: "Events", icon: Calendar, desc: "Event management" },
+    { key: "resources", label: "Resources", icon: BookOpen, desc: "Learning materials" },
+    { key: "newsletter", label: "Newsletter", icon: Check, desc: "Email broadcasts" },
+  ]},
+  { group: "Community", items: [
+    { key: "donations", label: "Donations", icon: Heart, desc: "Financial contributions" },
+    { key: "mentorship", label: "Mentorship", icon: GraduationCap, desc: "Mentor programs" },
+    { key: "voting", label: "Elections", icon: Vote, desc: "Voting management" },
+  ]},
+  { group: "Moderation", items: [
+    { key: "moderation", label: "Moderation", icon: Clock, desc: "Content approvals" },
+    { key: "reports", label: "Reports", icon: Flag, desc: "User reports" },
+  ]},
+];
+
+
 const AdminPage = () => {
+  const [activeSection, setActiveSection] = useState("analytics");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   useEffect(() => { document.title = "Admin — COOU Alumni Connect"; }, []);
+
+  const sectionMap: Record<string, React.FC> = {
+    analytics: AnalyticsTab,
+    users: UsersTab,
+    moderation: ModerationTab,
+    jobs: JobsTab,
+    events: EventsTab,
+    donations: DonationsTab,
+    mentorship: MentorshipTab,
+    resources: ResourcesTab,
+    newsletter: NewsletterAdminTab,
+    reports: ReportsTab,
+    verifications: VerificationsTab,
+    voting: ElectionsTab,
+  };
+
+  const ActiveComponent = sectionMap[activeSection];
+  const activeItem = ADMIN_SECTIONS.flatMap(g => g.items).find(i => i.key === activeSection);
 
   return (
     <AppShell>
-      <section className="container py-8 md:py-10">
-        <div className="mb-8 rounded-2xl border border-border/60 bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground p-6 md:p-8 shadow-lg">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <section className="container py-6 md:py-8">
+        {/* Header */}
+        <div className="mb-6 rounded-2xl border border-border/60 bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground p-5 md:p-8 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.25em] text-gold font-semibold mb-1.5">Administration · Control Panel</div>
-              <h1 className="font-display text-2xl md:text-4xl font-semibold">Admin Dashboard</h1>
-              <p className="text-primary-foreground/80 mt-2 text-sm md:text-base">Manage members, content, verifications, and platform analytics in one place.</p>
+              <div className="text-[11px] uppercase tracking-[0.25em] text-gold font-semibold mb-1">Administration · Control Panel</div>
+              <h1 className="font-display text-2xl md:text-3xl font-semibold">Admin Dashboard</h1>
+              <p className="text-primary-foreground/70 mt-1 text-sm">Manage members, content, verifications, and platform analytics.</p>
             </div>
             <div className="flex items-center gap-2 text-xs">
               <span className="px-3 py-1.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/20">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
@@ -69,37 +117,86 @@ const AdminPage = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="analytics">
-          <TabsList className="flex w-full overflow-x-auto md:grid md:max-w-5xl md:grid-cols-9">
-            <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1.5" />Analytics</TabsTrigger>
-            <TabsTrigger value="users"><Users className="w-4 h-4 mr-1.5" />Users</TabsTrigger>
-            <TabsTrigger value="moderation"><Clock className="w-4 h-4 mr-1.5" />Moderation</TabsTrigger>
-            <TabsTrigger value="jobs"><Briefcase className="w-4 h-4 mr-1.5" />Jobs</TabsTrigger>
-            <TabsTrigger value="events"><Calendar className="w-4 h-4 mr-1.5" />Events</TabsTrigger>
-            <TabsTrigger value="donations"><Heart className="w-4 h-4 mr-1.5" />Donations</TabsTrigger>
-            <TabsTrigger value="mentorship"><GraduationCap className="w-4 h-4 mr-1.5" />Mentorship</TabsTrigger>
-            <TabsTrigger value="resources"><BookOpen className="w-4 h-4 mr-1.5" />Resources</TabsTrigger>
-            <TabsTrigger value="newsletter"><Check className="w-4 h-4 mr-1.5" />Newsletter</TabsTrigger>
-            <TabsTrigger value="reports"><Flag className="w-4 h-4 mr-1.5" />Reports</TabsTrigger>
-          </TabsList>
+        {/* Mobile section selector */}
+        <div className="md:hidden mb-4">
+          <button
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card border border-border/60 shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              {activeItem && <activeItem.icon className="w-4 h-4 text-primary" />}
+              <span className="font-semibold text-sm">{activeItem?.label || "Analytics"}</span>
+            </div>
+            <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${mobileSidebarOpen ? "rotate-90" : ""}`} />
+          </button>
+          {mobileSidebarOpen && (
+            <div className="mt-2 rounded-xl bg-card border border-border/60 shadow-lg p-3 space-y-3 animate-in slide-in-from-top-2 duration-200">
+              {ADMIN_SECTIONS.map(group => (
+                <div key={group.group}>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 px-3 mb-1.5">{group.group}</div>
+                  {group.items.map(item => (
+                    <button
+                      key={item.key}
+                      onClick={() => { setActiveSection(item.key); setMobileSidebarOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        activeSection === item.key
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      <item.icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-          <TabsContent value="analytics" className="mt-6"><AnalyticsTab /></TabsContent>
-          <TabsContent value="users" className="mt-6"><UsersTab /></TabsContent>
-          <TabsContent value="moderation" className="mt-6"><ModerationTab /></TabsContent>
-          <TabsContent value="jobs" className="mt-6"><JobsTab /></TabsContent>
-          <TabsContent value="events" className="mt-6"><EventsTab /></TabsContent>
-          <TabsContent value="donations" className="mt-6"><DonationsTab /></TabsContent>
-          <TabsContent value="mentorship" className="mt-6"><MentorshipTab /></TabsContent>
-          <TabsContent value="resources" className="mt-6"><ResourcesTab /></TabsContent>
-          <TabsContent value="newsletter" className="mt-6"><NewsletterAdminTab /></TabsContent>
-          <TabsContent value="reports" className="mt-6"><ReportsTab /></TabsContent>
-        </Tabs>
+        {/* Desktop layout: sidebar + content */}
+        <div className="flex gap-6">
+          {/* Sidebar navigation */}
+          <aside className="hidden md:block w-56 lg:w-64 shrink-0">
+            <div className="sticky top-24 space-y-5">
+              {ADMIN_SECTIONS.map(group => (
+                <div key={group.group}>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-3 mb-2">{group.group}</div>
+                  <div className="space-y-0.5">
+                    {group.items.map(item => (
+                      <button
+                        key={item.key}
+                        onClick={() => setActiveSection(item.key)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                          activeSection === item.key
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                            : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                        }`}
+                      >
+                        <item.icon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                        <div className="text-left min-w-0">
+                          <div className="truncate">{item.label}</div>
+                          <div className={`text-[10px] truncate ${activeSection === item.key ? "text-primary-foreground/60" : "text-muted-foreground/50"}`}>{item.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* Content panel */}
+          <main className="flex-1 min-w-0">
+            {ActiveComponent && <ActiveComponent />}
+          </main>
+        </div>
       </section>
     </AppShell>
   );
 };
 
-// -------- Analytics --------
+
 const AnalyticsTab = () => {
   const [stats, setStats] = useState({ users: 0, verified: 0, suspended: 0, jobs: 0, pendingJobs: 0, events: 0, reports: 0, applications: 0 });
   const [signupsByDay, setSignupsByDay] = useState<{ day: string; n: number }[]>([]);
@@ -315,7 +412,7 @@ const UsersTab = () => {
   const [newPwd, setNewPwd] = useState("");
   const [resetting, setResetting] = useState(false);
   const [detail, setDetail] = useState<FullProfile | null>(null);
-  const [userCerts, setUserCerts] = useState<any[]>([]);
+  const [userCerts, setUserCerts] = useState<{ id: string; file_url: string; file_name: string; status: string; created_at: string; signed_url?: string }[]>([]);
   const [userDocs, setUserDocs] = useState<{ name: string; url: string; created_at?: string }[]>([]);
   const [userEdu, setUserEdu] = useState<any[]>([]);
   const [userEmp, setUserEmp] = useState<any[]>([]);
@@ -344,10 +441,22 @@ const UsersTab = () => {
       supabase.from("education").select("*").eq("user_id", p.user_id).order("start_year", { ascending: false }),
       supabase.from("employment").select("*").eq("user_id", p.user_id).order("current", { ascending: false }),
     ]);
+    // Generate signed URLs for certificates
+    // file_url is either a storage path (new: "userId/cert-123.jpg") or a legacy public URL
+    const certsWithSignedUrls = [];
+    for (const cert of (c.data ?? [])) {
+      const storagePath = cert.file_url.includes('/certificates/')
+        ? cert.file_url.split('/certificates/')[1]  // legacy: extract path from public URL
+        : cert.file_url;                              // new: already a clean path
+      const { data: signed } = await supabase.storage.from("certificates").createSignedUrl(storagePath, 3600);
+      certsWithSignedUrls.push({ ...cert, signed_url: signed?.signedUrl || "" });
+    }
+
     setCounts((prev) => ({ ...prev, [p.user_id]: { jobs: j.count ?? 0, donations: d.count ?? 0, events: e.count ?? 0 } }));
-    setUserCerts(c.data ?? []);
+    setUserCerts(certsWithSignedUrls);
     setUserEdu(edu.data ?? []);
     setUserEmp(emp.data ?? []);
+    
     // Documents bucket (private; admins can list & sign)
     const { data: docs } = await supabase.storage.from("documents").list(p.user_id, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
     const filtered = (docs ?? []).filter((f: any) => f.name && f.name !== ".emptyFolderPlaceholder");
@@ -682,10 +791,10 @@ const UsersTab = () => {
                             <div className="text-xs font-medium truncate">{c.file_name || "Certificate"}</div>
                             <div className="flex items-center gap-2 mt-1">
                               <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${c.status === 'verified' ? 'bg-green-100 text-green-800' : c.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>{c.status}</span>
-                              <a href={c.file_url} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline font-medium">View File ↗</a>
+                              <a href={c.signed_url || c.file_url} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline font-medium">View File ↗</a>
                             </div>
-                            {c.file_url && c.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) && (
-                              <img src={c.file_url} alt="Certificate preview" className="mt-2 max-h-40 rounded-lg border border-border/40 object-contain" />
+                            {(c.signed_url || c.file_url) && (c.signed_url || c.file_url).match(/\.(jpg|jpeg|png|gif|webp)$/i) && (
+                              <img src={c.signed_url || c.file_url} alt="Certificate preview" className="mt-2 max-h-40 rounded-lg border border-border/40 object-contain" />
                             )}
                           </div>
                           {c.status === 'pending' && (
@@ -1416,4 +1525,395 @@ const NewsletterAdminTab = () => {
   );
 };
 
+// -------- Verifications (Certificates) --------
+const VerificationsTab = () => {
+  const [pending, setPending] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("certificate_uploads")
+      .select("*, profiles(display_name, email, department, graduation_year)")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      const list = data || [];
+      const withUrls = [];
+      for (const c of list) {
+        const storagePath = c.file_url.includes('/certificates/')
+          ? c.file_url.split('/certificates/')[1]
+          : c.file_url;
+        const { data: signed } = await supabase.storage.from("certificates").createSignedUrl(storagePath, 3600);
+        withUrls.push({ ...c, signed_url: signed?.signedUrl });
+      }
+      setPending(withUrls);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const decide = async (id: string, userId: string, status: 'verified' | 'rejected') => {
+    const { error } = await supabase.from("certificate_uploads").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      if (status === 'verified') {
+        await supabase.from("profiles").update({ verified: true }).eq("user_id", userId);
+        toast.success("Certificate verified and user marked as verified");
+      } else {
+        toast.success("Certificate rejected");
+      }
+      load();
+    }
+  };
+
+  const filtered = pending.filter(c => 
+    !q || 
+    (c.profiles?.display_name || "").toLowerCase().includes(q.toLowerCase()) ||
+    (c.profiles?.email || "").toLowerCase().includes(q.toLowerCase()) ||
+    (c.file_name || "").toLowerCase().includes(q.toLowerCase())
+  );
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h3 className="font-display text-xl font-semibold text-primary">Pending Verifications</h3>
+          <p className="text-sm text-muted-foreground mt-1">Review alumni certificates and graduation proofs.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Input placeholder="Search name or email..." value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs h-10 rounded-xl" />
+          <Button variant="outline" size="sm" onClick={load} className="h-10 rounded-xl"><Clock className="w-4 h-4 mr-2" /> Refresh</Button>
+        </div>
+      </div>
+
+      <div className="grid gap-6">
+        {filtered.length > 0 ? filtered.map((c) => (
+          <div key={c.id} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col lg:flex-row gap-8">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary grid place-items-center font-bold text-lg">
+                    {(c.profiles?.display_name || "U")[0]}
+                  </div>
+                  <div>
+                    <div className="font-bold text-primary text-lg">{c.profiles?.display_name || "Unknown User"}</div>
+                    <div className="text-sm text-muted-foreground">{c.profiles?.email}</div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Department</p>
+                    <p className="text-sm font-medium">{c.profiles?.department || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Graduation Year</p>
+                    <p className="text-sm font-medium">{c.profiles?.graduation_year || "—"}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex flex-wrap gap-3">
+                  <Button variant="hero" size="sm" onClick={() => decide(c.id, c.user_id, 'verified')} className="rounded-xl h-10 px-6 font-bold shadow-lg shadow-primary/20">
+                    <Check className="w-4 h-4 mr-2" /> Approve & Verify
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => decide(c.id, c.user_id, 'rejected')} className="rounded-xl h-10 px-6 font-bold text-destructive hover:bg-destructive/5 hover:text-destructive border-destructive/20">
+                    <XIcon className="w-4 h-4 mr-2" /> Reject Submission
+                  </Button>
+                </div>
+              </div>
+
+              <div className="lg:w-[400px] flex-shrink-0">
+                <div className="rounded-xl border border-border/40 overflow-hidden bg-muted/30 group relative">
+                  {c.signed_url && c.signed_url.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
+                    <img src={c.signed_url} alt="Certificate" className="w-full h-48 object-contain transition-transform group-hover:scale-105" />
+                  ) : (
+                    <div className="w-full h-48 grid place-items-center text-muted-foreground">
+                      <div className="text-center">
+                        <Upload className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                        <p className="text-xs font-medium">Non-image file type</p>
+                        <p className="text-[10px] opacity-60">{c.file_name}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center">
+                    <a href={c.signed_url || c.file_url} target="_blank" rel="noreferrer" className="bg-white text-primary px-4 py-2 rounded-lg font-bold text-xs shadow-xl flex items-center gap-2">
+                      <Eye className="w-4 h-4" /> View Full Document
+                    </a>
+                  </div>
+                </div>
+                <div className="mt-2 text-center">
+                  <p className="text-[10px] text-muted-foreground font-mono">Submitted: {new Date(c.created_at).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )) : (
+          <div className="py-20 text-center border-2 border-dashed rounded-[2rem] bg-muted/10">
+            <ShieldCheck className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+            <h4 className="font-display text-xl font-semibold text-muted-foreground">All Caught Up!</h4>
+            <p className="text-sm text-muted-foreground mt-1">No pending certificates waiting for verification.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// -------- Voting (Elections & Candidates) --------
+const ElectionsTab = () => {
+  const [elections, setElections] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [managingCandidates, setManagingCandidates] = useState<any | null>(null);
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [loadingCands, setLoadingCands] = useState(false);
+  const [editingCand, setEditingCand] = useState<any | null>(null);
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({});
+
+  const loadElections = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("elections").select("*").order("created_at", { ascending: false });
+    setElections(data || []);
+    setLoading(false);
+  };
+
+  const loadCandidates = async (electionId: string) => {
+    setLoadingCands(true);
+    const { data: cands } = await supabase.from("election_candidates").select("*").eq("election_id", electionId);
+    const { data: votes } = await supabase.from("votes").select("candidate_id").eq("election_id", electionId);
+    
+    const counts: Record<string, number> = {};
+    (votes || []).forEach(v => counts[v.candidate_id] = (counts[v.candidate_id] || 0) + 1);
+    
+    setVoteCounts(counts);
+    setCandidates(cands || []);
+    setLoadingCands(false);
+  };
+
+  useEffect(() => { loadElections(); }, []);
+
+  const saveElection = async (e: any) => {
+    const payload = { title: e.title, description: e.description, starts_at: e.starts_at, ends_at: e.ends_at, status: e.status };
+    const { error } = e.id 
+      ? await supabase.from("elections").update(payload).eq("id", e.id)
+      : await supabase.from("elections").insert(payload);
+    
+    if (error) toast.error(error.message);
+    else { toast.success("Election saved"); setEditing(null); loadElections(); }
+  };
+
+  const deleteElection = async (id: string) => {
+    if (!confirm("Delete this election and all its votes/candidates?")) return;
+    const { error } = await supabase.from("elections").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Election deleted"); loadElections(); }
+  };
+
+  const saveCandidate = async (c: any) => {
+    const payload = { 
+      election_id: managingCandidates.id, 
+      name: c.name, 
+      position: c.position, 
+      manifesto: c.manifesto, 
+      image_url: c.image_url,
+      user_id: c.user_id || null
+    };
+    const { error } = c.id 
+      ? await supabase.from("election_candidates").update(payload).eq("id", c.id)
+      : await supabase.from("election_candidates").insert(payload);
+    
+    if (error) toast.error(error.message);
+    else { toast.success("Candidate saved"); setEditingCand(null); loadCandidates(managingCandidates.id); }
+  };
+
+  const deleteCandidate = async (id: string) => {
+    if (!confirm("Delete this candidate?")) return;
+    const { error } = await supabase.from("election_candidates").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Candidate removed"); loadCandidates(managingCandidates.id); }
+  };
+
+  if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="font-display text-xl font-semibold text-primary">Election Management</h3>
+          <p className="text-sm text-muted-foreground">Create and manage platform-wide voting events.</p>
+        </div>
+        <Button onClick={() => setEditing({ title: "", description: "", starts_at: new Date().toISOString(), ends_at: new Date(Date.now() + 7*86400000).toISOString(), status: "upcoming" })}>
+          <Plus className="w-4 h-4 mr-2" /> New Election
+        </Button>
+      </div>
+
+      <div className="grid gap-4">
+        {elections.map((e) => (
+          <div key={e.id} className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-lg text-primary">{e.title}</h4>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                    e.status === 'active' ? 'bg-green-100 text-green-700' : 
+                    e.status === 'closed' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'
+                  }`}>{e.status}</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{e.description}</p>
+                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1"><CalendarClock className="w-3 h-3" /> {new Date(e.starts_at).toLocaleDateString()} – {new Date(e.ends_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => { setManagingCandidates(e); loadCandidates(e.id); }}>
+                  <Users className="w-4 h-4 mr-2" /> Candidates
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button size="sm" variant="outline" className="text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => deleteElection(e.id)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {elections.length === 0 && <div className="text-center py-12 border-2 border-dashed rounded-2xl text-muted-foreground">No elections created yet.</div>}
+      </div>
+
+      {/* Edit Election Dialog */}
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{editing?.id ? "Edit Election" : "New Election"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1">
+              <Label>Title</Label>
+              <Input value={editing?.title || ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} placeholder="e.g. 2026 National Executive Council" />
+            </div>
+            <div className="space-y-1">
+              <Label>Description</Label>
+              <Textarea value={editing?.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} placeholder="Election details..." />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Starts At</Label>
+                <Input type="datetime-local" value={editing?.starts_at ? new Date(editing.starts_at).toISOString().slice(0, 16) : ""} onChange={(e) => setEditing({ ...editing, starts_at: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <Label>Ends At</Label>
+                <Input type="datetime-local" value={editing?.ends_at ? new Date(editing.ends_at).toISOString().slice(0, 16) : ""} onChange={(e) => setEditing({ ...editing, ends_at: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Status</Label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={editing?.status || "upcoming"} onChange={(e) => setEditing({ ...editing, status: e.target.value })}>
+                <option value="upcoming">Upcoming</option>
+                <option value="active">Active</option>
+                <option value="closed">Closed</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={() => saveElection(editing)}>Save Election</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Candidates Dialog */}
+      <Dialog open={!!managingCandidates} onOpenChange={(o) => !o && setManagingCandidates(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Candidates: {managingCandidates?.title}</DialogTitle>
+            <DialogDescription>Add and remove contestants for this election.</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="flex justify-between items-center">
+              <h5 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Current Contestants</h5>
+              <Button size="sm" onClick={() => setEditingCand({ name: "", position: "", manifesto: "", image_url: "" })}>
+                <Plus className="w-4 h-4 mr-2" /> Add Candidate
+              </Button>
+            </div>
+
+            <div className="grid gap-3">
+              {loadingCands ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : candidates.map((c) => (
+                <div key={c.id} className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-muted/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 grid place-items-center overflow-hidden">
+                      {c.image_url ? <img src={c.image_url} alt="" className="w-full h-full object-cover" /> : <Users className="w-5 h-5 text-primary/40" />}
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm">{c.name}</div>
+                      <div className="text-xs text-muted-foreground">{c.position}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-primary">{voteCounts[c.id] || 0}</div>
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Votes</div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => setEditingCand(c)}><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteCandidate(c.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {!loadingCands && candidates.length === 0 && <div className="text-center py-8 border border-dashed rounded-xl text-muted-foreground text-sm">No candidates added.</div>}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setManagingCandidates(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Candidate Dialog */}
+      <Dialog open={!!editingCand} onOpenChange={(o) => !o && setEditingCand(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{editingCand?.id ? "Edit Candidate" : "New Candidate"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1">
+              <Label>Full Name</Label>
+              <Input value={editingCand?.name || ""} onChange={(e) => setEditingCand({ ...editingCand, name: e.target.value })} placeholder="Candidate name" />
+            </div>
+            <div className="space-y-1">
+              <Label>Position</Label>
+              <Input value={editingCand?.position || ""} onChange={(e) => setEditingCand({ ...editingCand, position: e.target.value })} placeholder="e.g. President" />
+            </div>
+            <div className="space-y-1">
+              <Label>User ID (Optional - for profile link)</Label>
+              <Input value={editingCand?.user_id || ""} onChange={(e) => setEditingCand({ ...editingCand, user_id: e.target.value })} placeholder="UUID of the user" />
+            </div>
+            <div className="space-y-1">
+              <Label>Image URL</Label>
+              <Input value={editingCand?.image_url || ""} onChange={(e) => setEditingCand({ ...editingCand, image_url: e.target.value })} placeholder="Photo URL" />
+            </div>
+            <div className="space-y-1">
+              <Label>Manifesto</Label>
+              <Textarea rows={4} value={editingCand?.manifesto || ""} onChange={(e) => setEditingCand({ ...editingCand, manifesto: e.target.value })} placeholder="Campaign promises..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCand(null)}>Cancel</Button>
+            <Button onClick={() => saveCandidate(editingCand)}>Save Candidate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
 export default AdminPage;
+

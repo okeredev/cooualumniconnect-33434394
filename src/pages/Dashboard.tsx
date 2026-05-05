@@ -217,9 +217,8 @@ const DashboardPage = () => {
     const path = `${user.id}/cert-${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from("certificates").upload(path, file);
     if (upErr) { toast.error(upErr.message); setCertUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from("certificates").getPublicUrl(path);
     const { error: insErr } = await supabase.from("certificate_uploads").insert({
-      user_id: user.id, file_url: publicUrl, file_name: file.name,
+      user_id: user.id, file_url: path, file_name: file.name,
     });
     setCertUploading(false);
     if (insErr) toast.error(insErr.message);
@@ -603,8 +602,7 @@ const DashboardPage = () => {
                                 const path = `${user.id}/cert-${Date.now()}.${ext}`;
                                 const { error: upErr } = await supabase.storage.from("certificates").upload(path, file);
                                 if (upErr) { toast.error(upErr.message); setCertUploading(false); return; }
-                                const { data: { publicUrl } } = supabase.storage.from("certificates").getPublicUrl(path);
-                                await supabase.from("certificate_uploads").insert({ user_id: user.id, file_url: publicUrl, file_name: file.name });
+                                await supabase.from("certificate_uploads").insert({ user_id: user.id, file_url: path, file_name: file.name });
                                 setCertUploading(false);
                                 toast.success("Certificate uploaded successfully! It will be reviewed by an admin.");
                                 load();
@@ -630,8 +628,7 @@ const DashboardPage = () => {
                                 const path = `${user.id}/cert-${Date.now()}.${ext}`;
                                 const { error: upErr } = await supabase.storage.from("certificates").upload(path, file);
                                 if (upErr) { toast.error(upErr.message); setCertUploading(false); return; }
-                                const { data: { publicUrl } } = supabase.storage.from("certificates").getPublicUrl(path);
-                                await supabase.from("certificate_uploads").insert({ user_id: user.id, file_url: publicUrl, file_name: file.name });
+                                await supabase.from("certificate_uploads").insert({ user_id: user.id, file_url: path, file_name: file.name });
                                 setCertUploading(false);
                                 toast.success("Certificate uploaded — pending review");
                                 load();
