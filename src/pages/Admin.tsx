@@ -800,7 +800,7 @@ const UsersTab = () => {
                           {c.status === 'pending' && (
                             <div className="flex gap-1 flex-shrink-0">
                               <Button size="sm" variant="hero" className="h-7 text-[10px]" onClick={async () => {
-                                const { error } = await supabase.from("certificate_uploads").update({ status: 'verified', reviewed_at: new Date().toISOString() }).eq("id", c.id);
+                                const { error } = await supabase.from("certificate_uploads").update({ status: 'verified' } as any).eq("id", c.id);
                                 if (!error) {
                                   await supabase.from("profiles").update({ verified: true }).eq("user_id", detail.user_id);
                                   if (!detail.coou_id) await generateCoouId(detail, true);
