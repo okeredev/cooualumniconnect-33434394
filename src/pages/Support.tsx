@@ -15,8 +15,8 @@ type Campaign = {
   id: string;
   title: string;
   description: string;
-  category: "student_support" | "academic_research" | "welfare";
-  target_amount: number;
+  category: string;
+  target_amount: number | null;
   current_amount: number;
   active: boolean;
 };
