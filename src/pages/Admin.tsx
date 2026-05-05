@@ -403,7 +403,7 @@ const UsersTab = () => {
   const [roles, setRoles] = useState<Record<string, Role[]>>({});
   const [counts, setCounts] = useState<Record<string, { jobs: number; donations: number; events: number }>>({});
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "verified" | "suspended" | "admins">("all");
+  const [filter, setFilter] = useState<"all" | "verified" | "suspended" | "admins" | "pending_directory">("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
   const [loading, setLoading] = useState(true);
