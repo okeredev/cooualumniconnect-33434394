@@ -810,7 +810,7 @@ const UsersTab = () => {
                                 }
                               }}>✓ Verify</Button>
                               <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={async () => {
-                                await supabase.from("certificate_uploads").update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq("id", c.id);
+                                await supabase.from("certificate_uploads").update({ status: 'rejected' } as any).eq("id", c.id);
                                 toast.success("Rejected");
                                 load();
                                 loadUserData(detail);
