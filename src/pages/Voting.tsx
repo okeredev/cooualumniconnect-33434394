@@ -68,8 +68,9 @@ const VotingPage = () => {
     const { data, error } = await supabase.from("elections").select("*").order("starts_at", { ascending: false });
     
     if (data && data.length > 0) {
-      setElections(data);
-      const current = data.find(e => e.status === 'active') || data[0];
+      const enriched: Election[] = data.map((e: any) => ({ ...e, status: computeStatus(e) }));
+      setElections(enriched);
+      const current = enriched.find(e => e.status === 'active') || enriched[0];
       if (current) await selectElection(current);
     } else {
       setElections([]);
