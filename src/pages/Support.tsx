@@ -15,8 +15,8 @@ type Campaign = {
   id: string;
   title: string;
   description: string;
-  category: "student_support" | "academic_research" | "welfare";
-  target_amount: number;
+  category: string;
+  target_amount: number | null;
   current_amount: number;
   active: boolean;
 };
@@ -98,7 +98,7 @@ const SupportPage = () => {
     setLoading(true);
     const { data, error } = await supabase.from("support_campaigns").select("*").eq("active", true);
     if (error) toast.error("Failed to load initiatives");
-    else setCampaigns(data || []);
+    else setCampaigns(((data as any[]) || []).map(c => ({ ...c, current_amount: c.raised_amount ?? 0 })));
     setLoading(false);
   };
 

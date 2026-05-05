@@ -403,7 +403,7 @@ const UsersTab = () => {
   const [roles, setRoles] = useState<Record<string, Role[]>>({});
   const [counts, setCounts] = useState<Record<string, { jobs: number; donations: number; events: number }>>({});
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "verified" | "suspended" | "admins">("all");
+  const [filter, setFilter] = useState<"all" | "verified" | "suspended" | "admins" | "pending_directory">("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -800,7 +800,7 @@ const UsersTab = () => {
                           {c.status === 'pending' && (
                             <div className="flex gap-1 flex-shrink-0">
                               <Button size="sm" variant="hero" className="h-7 text-[10px]" onClick={async () => {
-                                const { error } = await supabase.from("certificate_uploads").update({ status: 'verified', reviewed_at: new Date().toISOString() }).eq("id", c.id);
+                                const { error } = await supabase.from("certificate_uploads").update({ status: 'verified' } as any).eq("id", c.id);
                                 if (!error) {
                                   await supabase.from("profiles").update({ verified: true }).eq("user_id", detail.user_id);
                                   if (!detail.coou_id) await generateCoouId(detail, true);
@@ -810,7 +810,7 @@ const UsersTab = () => {
                                 }
                               }}>✓ Verify</Button>
                               <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={async () => {
-                                await supabase.from("certificate_uploads").update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq("id", c.id);
+                                await supabase.from("certificate_uploads").update({ status: 'rejected' } as any).eq("id", c.id);
                                 toast.success("Rejected");
                                 load();
                                 loadUserData(detail);
@@ -1559,7 +1559,7 @@ const VerificationsTab = () => {
   useEffect(() => { load(); }, []);
 
   const decide = async (id: string, userId: string, status: 'verified' | 'rejected') => {
-    const { error } = await supabase.from("certificate_uploads").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
+    const { error } = await supabase.from("certificate_uploads").update({ status } as any).eq("id", id);
     if (error) {
       toast.error(error.message);
     } else {
@@ -1702,7 +1702,7 @@ const ElectionsTab = () => {
   useEffect(() => { loadElections(); }, []);
 
   const saveElection = async (e: any) => {
-    const payload = { title: e.title, description: e.description, starts_at: e.starts_at, ends_at: e.ends_at, status: e.status };
+    const payload: any = { title: e.title, description: e.description, starts_at: e.starts_at, ends_at: e.ends_at, active: e.active ?? true };
     const { error } = e.id 
       ? await supabase.from("elections").update(payload).eq("id", e.id)
       : await supabase.from("elections").insert(payload);

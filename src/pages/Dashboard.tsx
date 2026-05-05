@@ -14,7 +14,7 @@ import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Newsletter } from "@/components/app/Newsletter";
 
-type CertUpload = { id: string; file_url: string; file_name: string | null; status: string; admin_notes: string | null; created_at: string };
+type CertUpload = { id: string; file_url: string; file_name: string | null; status: string; admin_notes?: string | null; created_at: string };
 
 type Profile = {
   id?: string;

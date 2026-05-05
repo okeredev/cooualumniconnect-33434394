@@ -16,7 +16,15 @@ type Election = {
   description: string;
   starts_at: string;
   ends_at: string;
+  active?: boolean;
   status: "upcoming" | "active" | "closed";
+};
+
+const computeStatus = (e: { active?: boolean | null; starts_at: string; ends_at: string }): "upcoming" | "active" | "closed" => {
+  const now = Date.now();
+  if (now < new Date(e.starts_at).getTime()) return "upcoming";
+  if (now > new Date(e.ends_at).getTime() || e.active === false) return "closed";
+  return "active";
 };
 
 type Candidate = {
@@ -60,8 +68,9 @@ const VotingPage = () => {
     const { data, error } = await supabase.from("elections").select("*").order("starts_at", { ascending: false });
     
     if (data && data.length > 0) {
-      setElections(data);
-      const current = data.find(e => e.status === 'active') || data[0];
+      const enriched: Election[] = data.map((e: any) => ({ ...e, status: computeStatus(e) }));
+      setElections(enriched);
+      const current = enriched.find(e => e.status === 'active') || enriched[0];
       if (current) await selectElection(current);
     } else {
       setElections([]);
