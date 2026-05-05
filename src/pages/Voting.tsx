@@ -16,7 +16,15 @@ type Election = {
   description: string;
   starts_at: string;
   ends_at: string;
+  active?: boolean;
   status: "upcoming" | "active" | "closed";
+};
+
+const computeStatus = (e: { active?: boolean | null; starts_at: string; ends_at: string }): "upcoming" | "active" | "closed" => {
+  const now = Date.now();
+  if (now < new Date(e.starts_at).getTime()) return "upcoming";
+  if (now > new Date(e.ends_at).getTime() || e.active === false) return "closed";
+  return "active";
 };
 
 type Candidate = {
