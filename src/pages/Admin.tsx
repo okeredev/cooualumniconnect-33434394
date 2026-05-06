@@ -1535,24 +1535,32 @@ const VerificationsTab = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("certificate_uploads")
-      .select("*, profiles(display_name, email, department, graduation_year)")
+      .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
     if (error) {
       toast.error(error.message);
-    } else {
-      const list = data || [];
-      const withUrls = [];
-      for (const c of list) {
-        const storagePath = c.file_url.includes('/certificates/')
-          ? c.file_url.split('/certificates/')[1]
-          : c.file_url;
-        const { data: signed } = await supabase.storage.from("certificates").createSignedUrl(storagePath, 3600);
-        withUrls.push({ ...c, signed_url: signed?.signedUrl });
-      }
-      setPending(withUrls);
+      setLoading(false);
+      return;
     }
+    const list = data || [];
+    const userIds = Array.from(new Set(list.map((c: any) => c.user_id)));
+    const { data: profs } = userIds.length
+      ? await supabase.from("profiles").select("user_id, display_name, email, department, graduation_year, avatar_url, coou_id").in("user_id", userIds)
+      : { data: [] as any[] };
+    const profMap: Record<string, any> = {};
+    (profs ?? []).forEach((p: any) => { profMap[p.user_id] = p; });
+
+    const withUrls: any[] = [];
+    for (const c of list) {
+      const storagePath = c.file_url.includes('/certificates/')
+        ? c.file_url.split('/certificates/')[1]
+        : c.file_url;
+      const { data: signed } = await supabase.storage.from("certificates").createSignedUrl(storagePath, 3600);
+      withUrls.push({ ...c, signed_url: signed?.signedUrl, profiles: profMap[c.user_id] || null });
+    }
+    setPending(withUrls);
     setLoading(false);
   };
 
