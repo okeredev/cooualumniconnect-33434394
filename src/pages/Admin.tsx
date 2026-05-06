@@ -1535,24 +1535,32 @@ const VerificationsTab = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("certificate_uploads")
-      .select("*, profiles(display_name, email, department, graduation_year)")
+      .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
     if (error) {
       toast.error(error.message);
-    } else {
-      const list = data || [];
-      const withUrls = [];
-      for (const c of list) {
-        const storagePath = c.file_url.includes('/certificates/')
-          ? c.file_url.split('/certificates/')[1]
-          : c.file_url;
-        const { data: signed } = await supabase.storage.from("certificates").createSignedUrl(storagePath, 3600);
-        withUrls.push({ ...c, signed_url: signed?.signedUrl });
-      }
-      setPending(withUrls);
+      setLoading(false);
+      return;
     }
+    const list = data || [];
+    const userIds = Array.from(new Set(list.map((c: any) => c.user_id)));
+    const { data: profs } = userIds.length
+      ? await supabase.from("profiles").select("user_id, display_name, email, department, graduation_year, avatar_url, coou_id").in("user_id", userIds)
+      : { data: [] as any[] };
+    const profMap: Record<string, any> = {};
+    (profs ?? []).forEach((p: any) => { profMap[p.user_id] = p; });
+
+    const withUrls: any[] = [];
+    for (const c of list) {
+      const storagePath = c.file_url.includes('/certificates/')
+        ? c.file_url.split('/certificates/')[1]
+        : c.file_url;
+      const { data: signed } = await supabase.storage.from("certificates").createSignedUrl(storagePath, 3600);
+      withUrls.push({ ...c, signed_url: signed?.signedUrl, profiles: profMap[c.user_id] || null });
+    }
+    setPending(withUrls);
     setLoading(false);
   };
 
@@ -1744,6 +1752,14 @@ const ElectionsTab = () => {
 
   if (loading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
 
+  const computeStatus = (e: any): "upcoming" | "active" | "closed" => {
+    const now = Date.now();
+    if (e.active === false) return "closed";
+    if (now < new Date(e.starts_at).getTime()) return "upcoming";
+    if (now > new Date(e.ends_at).getTime()) return "closed";
+    return "active";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -1751,22 +1767,24 @@ const ElectionsTab = () => {
           <h3 className="font-display text-xl font-semibold text-primary">Election Management</h3>
           <p className="text-sm text-muted-foreground">Create and manage platform-wide voting events.</p>
         </div>
-        <Button onClick={() => setEditing({ title: "", description: "", starts_at: new Date().toISOString(), ends_at: new Date(Date.now() + 7*86400000).toISOString(), status: "upcoming" })}>
+        <Button onClick={() => setEditing({ title: "", description: "", starts_at: new Date().toISOString(), ends_at: new Date(Date.now() + 7*86400000).toISOString(), active: true })}>
           <Plus className="w-4 h-4 mr-2" /> New Election
         </Button>
       </div>
 
       <div className="grid gap-4">
-        {elections.map((e) => (
+        {elections.map((e) => {
+          const status = computeStatus(e);
+          return (
           <div key={e.id} className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h4 className="font-bold text-lg text-primary">{e.title}</h4>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                    e.status === 'active' ? 'bg-green-100 text-green-700' : 
-                    e.status === 'closed' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'
-                  }`}>{e.status}</span>
+                    status === 'active' ? 'bg-green-100 text-green-700' : 
+                    status === 'closed' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'
+                  }`}>{status}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{e.description}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -1786,7 +1804,8 @@ const ElectionsTab = () => {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
         {elections.length === 0 && <div className="text-center py-12 border-2 border-dashed rounded-2xl text-muted-foreground">No elections created yet.</div>}
       </div>
 
@@ -1806,20 +1825,16 @@ const ElectionsTab = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Starts At</Label>
-                <Input type="datetime-local" value={editing?.starts_at ? new Date(editing.starts_at).toISOString().slice(0, 16) : ""} onChange={(e) => setEditing({ ...editing, starts_at: e.target.value })} />
+                <Input type="datetime-local" value={editing?.starts_at ? new Date(editing.starts_at).toISOString().slice(0, 16) : ""} onChange={(e) => setEditing({ ...editing, starts_at: new Date(e.target.value).toISOString() })} />
               </div>
               <div className="space-y-1">
                 <Label>Ends At</Label>
-                <Input type="datetime-local" value={editing?.ends_at ? new Date(editing.ends_at).toISOString().slice(0, 16) : ""} onChange={(e) => setEditing({ ...editing, ends_at: e.target.value })} />
+                <Input type="datetime-local" value={editing?.ends_at ? new Date(editing.ends_at).toISOString().slice(0, 16) : ""} onChange={(e) => setEditing({ ...editing, ends_at: new Date(e.target.value).toISOString() })} />
               </div>
             </div>
-            <div className="space-y-1">
-              <Label>Status</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={editing?.status || "upcoming"} onChange={(e) => setEditing({ ...editing, status: e.target.value })}>
-                <option value="upcoming">Upcoming</option>
-                <option value="active">Active</option>
-                <option value="closed">Closed</option>
-              </select>
+            <div className="flex items-center gap-2">
+              <input id="el-active" type="checkbox" checked={editing?.active ?? true} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} />
+              <Label htmlFor="el-active" className="cursor-pointer">Active (uncheck to close election)</Label>
             </div>
           </div>
           <DialogFooter>
