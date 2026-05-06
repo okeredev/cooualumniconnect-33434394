@@ -57,6 +57,21 @@ const VotingPage = () => {
     loadElections();
   }, [user]);
 
+  // Realtime subscription: refresh tallies when any vote is cast for the active election
+  useEffect(() => {
+    if (!activeElection) return;
+    const channel = supabase
+      .channel(`votes-${activeElection.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "votes", filter: `election_id=eq.${activeElection.id}` },
+        () => { selectElection(activeElection); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeElection?.id]);
+
   const checkVerification = async () => {
     if (!user) return;
     const { data } = await supabase.from("profiles").select("verified").eq("user_id", user.id).maybeSingle();
@@ -323,12 +338,13 @@ const VotingPage = () => {
                                   )}
                                 </div>
                               </div>
-                              {activeElection.status === 'closed' && (
-                                <div className="bg-primary text-white px-6 py-2 rounded-2xl shadow-lg">
-                                  <p className="text-[10px] font-bold uppercase opacity-60">Total Votes</p>
-                                  <p className="text-xl font-display font-bold">{c.votes_count ?? 0}</p>
-                                </div>
-                              )}
+                              <div className="bg-primary text-white px-6 py-2 rounded-2xl shadow-lg">
+                                <p className="text-[10px] font-bold uppercase opacity-60 flex items-center gap-1">
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                  Live Votes
+                                </p>
+                                <p className="text-xl font-display font-bold">{c.votes_count ?? 0}</p>
+                              </div>
                             </div>
                             
                             <div className="relative">
